@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Protótipo SBAR UTIP HEMOAM</title>
+<style>
+  :root {
+    --paper: #ffffff;
+    --ink: #1a1a1a;
+    --line: #888;
+    --line-strong: #333;
+    --header-bg: #1f3864;
+    --header-fg: #ffffff;
+    --alert-bg: #fdecea;
+    --alert-border: #c0392b;
+    --section-badge: #1f3864;
+    --backdrop: #e7e9ec;
+    --muted: #555;
+  }
+  :root[data-theme="dark"] {
+    --backdrop: #202225;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --backdrop: #202225; }
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    color-adjust: exact;
+  }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--backdrop);
+    font-family: Arial, Helvetica, sans-serif;
+    color: var(--ink);
+  }
+
+  .toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--header-bg);
+    color: var(--header-fg);
+    font-size: 13px;
+  }
+  .toolbar button {
+    background: #ffffff;
+    color: var(--header-bg);
+    border: none;
+    border-radius: 4px;
+    padding: 6px 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .toolbar button:hover { opacity: 0.9; }
+  .toolbar .note { opacity: 0.9; }
+
+  .sheet-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10mm;
+    padding: 10mm 0 20mm;
+  }
+
+  .page {
+    background: var(--paper);
+    color: #1a1a1a;
+    width: 281mm;
+    aspect-ratio: 297 / 210;
+    padding: 2mm 6mm 2mm;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+  }
+
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1mm solid var(--header-bg);
+    padding-bottom: 1mm;
+    margin-bottom: 2mm;
+  }
+  .page-header .brand {
+    font-weight: 800;
+    font-size: 12px;
+    color: var(--header-bg);
+    letter-spacing: 0.3px;
+  }
+  .page-header .title {
+    text-align: center;
+    flex: 1;
+  }
+  .page-header .title .t1 {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--header-bg);
+  }
+  .page-header .title .t2 {
+    font-size: 10px;
+    color: var(--muted);
+  }
+  .page-header .pageno {
+    font-size: 9px;
+    color: var(--muted);
+    min-width: 60px;
+    text-align: right;
+  }
+  .page-header .page-date {
+    font-size: 9px;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    margin-right: 8mm;
+  }
+  .page-header .page-date input[type="text"] {
+    border-bottom: 0.25mm dotted #7a7a7a;
+  }
+
+  .cards {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2mm;
+    min-height: 0;
+  }
+
+  .bed-card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border: 0.4mm solid var(--line-strong);
+    min-height: 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .row {
+    display: flex;
+    border-bottom: 0.2mm solid var(--line);
+  }
+  .row:last-child { border-bottom: none; }
+  .cell {
+    flex: 1;
+    padding: 0.4mm 2mm;
+    border-right: 0.2mm solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 8.3px;
+    line-height: 1.2;
+  }
+  .cell.r-cont { padding-top: 0; }
+  .cell:last-child { border-right: none; }
+  .cell.wide { flex: 2; }
+  .cell.xwide { flex: 3.2; }
+
+  .label { font-weight: 700; white-space: nowrap; }
+  .label.section {
+    color: #fff;
+    background: var(--section-badge);
+    padding: 0 2mm;
+    border-radius: 2px;
+    margin-right: 2px;
+  }
+
+  input[type="text"] {
+    border: none;
+    border-bottom: 0.25mm dotted #7a7a7a;
+    background: transparent;
+    font: inherit;
+    color: inherit;
+    width: 100%;
+    padding: 0 1px;
+  }
+  input[type="text"]:focus { outline: none; border-bottom-color: var(--header-bg); }
+
+  .chk {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    white-space: nowrap;
+    font-weight: 400;
+  }
+  .chk input[type="checkbox"] {
+    width: 9px;
+    height: 9px;
+    margin: 0;
+  }
+
+  .header-strip {
+    background: var(--header-bg);
+    color: #fff;
+  }
+  .header-strip .cell { border-right-color: rgba(255,255,255,0.35); }
+  .header-strip .label { font-weight: 800; }
+  .header-strip input[type="text"] { color: #fff; border-bottom-color: rgba(255,255,255,0.6); }
+
+  .alert-row {
+    background: var(--alert-bg);
+    border-top: 0.3mm solid var(--alert-border);
+    border-bottom: 0.3mm solid var(--alert-border);
+    flex-wrap: wrap;
+  }
+  .alert-row .cell { border-right-color: rgba(192,57,43,0.35); }
+  .alert-row .label { color: var(--alert-border); }
+
+  .vent-row .cell { gap: 5px; }
+  .vent-row input[type="text"] { min-width: 10mm; }
+  .vent-field { display:flex; align-items:center; gap:2px; white-space:nowrap; }
+
+  .written-block {
+    flex: 1.15;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    border-top: 0.3mm solid var(--line-strong);
+  }
+  .written-heading {
+    display: flex;
+    font-size: 8px;
+    font-weight: 800;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .written-heading > div { flex: 1; padding: 0.5mm 2mm 0; }
+  .written-heading > div:first-child { border-right: 0.2mm solid var(--line); }
+
+  .written-cols {
+    flex: 1;
+    display: flex;
+    min-height: 29mm;
+  }
+  .written-col {
+    flex: 1;
+    padding: 0 2mm;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 5.2mm,
+      var(--line) 5.2mm,
+      var(--line) 5.45mm
+    );
+  }
+  .written-col:first-child { border-right: 0.2mm solid var(--line); }
+
+  .sign-row {
+    border-top: 0.3mm solid var(--line-strong);
+    font-size: 8px;
+    padding: 0.3mm 2mm;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .sign-row input[type="text"] { flex: 1; }
+
+  @media print {
+    .toolbar { display: none; }
+    html, body { background: #fff; }
+    .sheet-wrap { padding: 0; gap: 0; }
+    .page {
+      box-shadow: none;
+      width: 100%;
+      aspect-ratio: auto;
+      break-after: page;
+      page-break-after: always;
+    }
+    .page:last-child {
+      break-after: auto;
+      page-break-after: auto;
+    }
+  }
+
+  @page {
+    size: A4 landscape;
+    margin: 8mm;
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar no-print">
+  <div class="note">Protótipo — preencher os campos digitados de manhã, imprimir e completar a lápis/caneta à tarde e à noite.</div>
+  <button id="print-btn">Imprimir / Salvar PDF</button>
+</div>
+
+<div class="sheet-wrap" id="app"></div>
+
+<script>
+  const beds = [409, 410, 411, 412, 413, 414, 415, 416];
+
+  function chkPair(nameBase) {
+    return `
+      <label class="chk"><input type="checkbox" name="${nameBase}_n"> N</label>
+      <label class="chk"><input type="checkbox" name="${nameBase}_s"> S</label>
+    `;
+  }
+
+  function bedCard(bed) {
+    return `
+    <div class="bed-card">
+      <div class="row header-strip">
+        <div class="cell"><span class="label">LEITO ${bed}</span></div>
+        <div class="cell wide"><span class="label">Data internação:</span><input type="text"></div>
+        <div class="cell wide"><span class="label">Idade/DN:</span><input type="text"></div>
+      </div>
+
+      <div class="row">
+        <div class="cell xwide"><span class="label">Nome:</span><input type="text"></div>
+        <div class="cell xwide"><span class="label">Nome da mãe:</span><input type="text"></div>
+      </div>
+
+      <div class="row alert-row">
+        <div class="cell"><span class="label">Alergias:</span>${chkPair('aler_' + bed)}</div>
+        <div class="cell xwide">
+          <span class="label">Dispositivos:</span>
+          <label class="chk"><input type="checkbox"> CVC</label>
+          <input type="text" style="max-width:10mm">
+          <label class="chk"><input type="checkbox"> TOT</label>
+          <input type="text" style="max-width:10mm">
+          <label class="chk"><input type="checkbox"> SVD</label>
+          <label class="chk"><input type="checkbox"> SNE</label>
+          <label class="chk"><input type="checkbox"> SNG</label>
+          <label class="chk"><input type="checkbox"> Shiley</label>
+          <label class="chk"><input type="checkbox"> Tenkhoff</label>
+          <label class="chk"><input type="checkbox"> Outro:</label>
+          <input type="text" style="max-width:16mm">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="cell xwide"><span class="label section">S</span>Diagnósticos:<input type="text"></div>
+      </div>
+
+      <div class="row">
+        <div class="cell"><span class="label section">B</span>Antibióticos:${chkPair('atb_' + bed)}</div>
+        <div class="cell">Culturas:${chkPair('cult_' + bed)}</div>
+        <div class="cell">QT:${chkPair('qt_' + bed)}</div>
+        <div class="cell">Diálise:${chkPair('dial_' + bed)}</div>
+        <div class="cell">Sedação/Analgesia:${chkPair('sed_' + bed)}</div>
+        <div class="cell">Corr. eletrólitos:${chkPair('elet_' + bed)}</div>
+      </div>
+
+      <div class="row">
+        <div class="cell"><span class="label section">A</span>Dieta:${chkPair('dieta_' + bed)}</div>
+        <div class="cell">O2:${chkPair('o2_' + bed)}</div>
+        <div class="cell">DVA:${chkPair('dva_' + bed)}</div>
+        <div class="cell wide">
+          Transfusão:
+          <label class="chk"><input type="checkbox"> CH</label>
+          <label class="chk"><input type="checkbox"> CP</label>
+          <label class="chk"><input type="checkbox"> PFC</label>
+          <label class="chk"><input type="checkbox"> CRIO</label>
+        </div>
+      </div>
+
+      <div class="row vent-row">
+        <div class="cell xwide">
+          <span class="label">Suporte ventilatório:</span>
+          <label class="chk"><input type="checkbox"> Ar ambiente</label>
+          <label class="chk"><input type="checkbox"> O2</label>
+          <label class="chk"><input type="checkbox"> VNI</label>
+          <label class="chk"><input type="checkbox"> VPM</label>
+          <span class="vent-field">Modo:<input type="text"></span>
+          <span class="vent-field">FiO2:<input type="text"></span>
+          <span class="vent-field">Pinsp/Epap:<input type="text"></span>
+          <span class="vent-field">Peep/Ipap:<input type="text"></span>
+          <span class="vent-field">Tins:<input type="text"></span>
+          <span class="vent-field">FR:<input type="text"></span>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="cell xwide"><span class="label section">R</span>Programação/Condutas:<input type="text"></div>
+      </div>
+      <div class="row">
+        <div class="cell xwide r-cont"><input type="text"></div>
+      </div>
+      <div class="row">
+        <div class="cell wide">Exames pendentes:<input type="text"></div>
+        <div class="cell wide">Reavaliar:<input type="text"></div>
+      </div>
+      <div class="row">
+        <div class="cell xwide">Pendências:<input type="text"></div>
+      </div>
+      <div class="row">
+        <div class="cell wide">Alta:${chkPair('alta_' + bed)}<span class="vent-field">Leito:<input type="text" style="max-width:14mm"></span></div>
+      </div>
+
+      <div class="written-block">
+        <div class="written-heading">
+          <div>Intercorrências / evolução — TARDE</div>
+          <div>Intercorrências / evolução — NOITE</div>
+        </div>
+        <div class="written-cols">
+          <div class="written-col"></div>
+          <div class="written-col"></div>
+        </div>
+      </div>
+
+      <div class="sign-row">
+        <span class="label">Assinatura/CRM do plantonista:</span>
+        <input type="text">
+      </div>
+    </div>
+    `;
+  }
+
+  let html = '';
+  for (let i = 0; i < beds.length; i += 2) {
+    const pageNum = i / 2 + 1;
+    const totalPages = Math.ceil(beds.length / 2);
+    html += `
+      <div class="page">
+        <div class="page-header">
+          <div class="brand">HOSPITAL DO SANGUE</div>
+          <div class="title">
+            <div class="t1">ISBAR | PASSAGEM DE PLANTÃO</div>
+            <div class="t2">UTI PEDIÁTRICA — HEMOAM</div>
+          </div>
+          ${pageNum === 1 ? `
+          <div class="page-date">
+            <span class="label">Data:</span><input type="text" style="max-width:22mm">
+          </div>` : '<div class="page-date"></div>'}
+          <div class="pageno">Página ${pageNum}/${totalPages}</div>
+        </div>
+        <div class="cards">
+          ${bedCard(beds[i])}
+          ${i + 1 < beds.length ? bedCard(beds[i + 1]) : ''}
+        </div>
+      </div>
+    `;
+  }
+  document.getElementById('app').innerHTML = html;
+
+  document.getElementById('print-btn').addEventListener('click', () => window.print());
+</script>
+</body>
+</html>
