@@ -247,13 +247,10 @@
   .written-col {
     flex: 1;
     padding: 0 2mm;
-    background-image: repeating-linear-gradient(
-      to bottom,
-      transparent 0,
-      transparent 5.2mm,
-      var(--line) 5.2mm,
-      var(--line) 5.45mm
-    );
+    background-image: linear-gradient(var(--line) 1px, transparent 1px);
+    background-size: 100% 5.45mm;
+    background-position: 0 5.2mm;
+    background-repeat: repeat;
   }
   .written-col:first-child { border-right: 0.2mm solid var(--line); }
 
