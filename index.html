@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Protótipo SBAR UTIP HEMOAM</title>
+<title>ISBAR UTI Pediátrica - HEMOAM</title>
 <style>
   :root {
     --paper: #ffffff;
@@ -469,14 +469,79 @@
     });
   }
 
+  const AUTOSAVE_KEY = 'hemoam-isbar-utip-rascunho';
+
+  function coletarEstado() {
+    const beds = {};
+    document.querySelectorAll('.bed-card').forEach(card => {
+      const bed = card.dataset.bed;
+      const campos = {};
+      card.querySelectorAll('[data-field]').forEach(el => {
+        campos[el.dataset.field] = el.type === 'checkbox' ? el.checked : el.value;
+      });
+      beds[bed] = campos;
+    });
+    const pageDateEl = document.getElementById('page-date');
+    return {
+      pageDate: pageDateEl ? pageDateEl.value : '',
+      beds
+    };
+  }
+
+  function restaurarEstado(dados) {
+    if (!dados || typeof dados !== 'object') return;
+    const pageDateEl = document.getElementById('page-date');
+    if (pageDateEl && typeof dados.pageDate === 'string') pageDateEl.value = dados.pageDate;
+    if (!dados.beds) return;
+    document.querySelectorAll('.bed-card').forEach(card => {
+      const bed = card.dataset.bed;
+      const campos = dados.beds[bed];
+      if (!campos) return;
+      card.querySelectorAll('[data-field]').forEach(el => {
+        if (!(el.dataset.field in campos)) return;
+        const valor = campos[el.dataset.field];
+        if (el.type === 'checkbox') el.checked = !!valor;
+        else el.value = valor;
+      });
+    });
+  }
+
+  function salvarEstadoLocal() {
+    try {
+      localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(coletarEstado()));
+    } catch (e) { /* localStorage indisponível ou cheio: ignora */ }
+  }
+
+  let salvarEstadoLocalTimeout = null;
+  function salvarEstadoLocalDebounced() {
+    clearTimeout(salvarEstadoLocalTimeout);
+    salvarEstadoLocalTimeout = setTimeout(salvarEstadoLocal, 400);
+  }
+
+  function restaurarEstadoLocal() {
+    let dados;
+    try {
+      const raw = localStorage.getItem(AUTOSAVE_KEY);
+      if (!raw) return;
+      dados = JSON.parse(raw);
+    } catch (e) { return; }
+    restaurarEstado(dados);
+  }
+
   document.addEventListener('click', (e) => {
     const clearBtn = e.target.closest('.clear-bed-btn');
     if (!clearBtn) return;
     const bed = clearBtn.dataset.clearBed;
     if (confirm(`Limpar todos os dados do leito ${bed}? Essa ação não pode ser desfeita.`)) {
       limparLeito(bed);
+      salvarEstadoLocal();
     }
   });
+
+  document.addEventListener('input', salvarEstadoLocalDebounced);
+  document.addEventListener('change', salvarEstadoLocalDebounced);
+
+  restaurarEstadoLocal();
 </script>
 </body>
 </html>
