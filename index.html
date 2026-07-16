@@ -208,6 +208,19 @@
   .header-strip .label { font-weight: 800; }
   .header-strip input[type="text"] { color: #fff; border-bottom-color: rgba(255,255,255,0.6); }
 
+  .header-strip .clear-bed-btn {
+    background: transparent;
+    color: #fff;
+    border: 0.25mm solid rgba(255,255,255,0.6);
+    border-radius: 2px;
+    padding: 0.3mm 2mm;
+    font-size: 7.5px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .header-strip .clear-bed-btn:hover { background: rgba(255,255,255,0.15); }
+
   .alert-row {
     background: var(--alert-bg);
     border-top: 0.3mm solid var(--alert-border);
@@ -265,7 +278,8 @@
   .sign-row input[type="text"] { flex: 1; }
 
   @media print {
-    .toolbar { display: none; }
+    .toolbar,
+    .no-print { display: none; }
     html, body { background: #fff; }
     .sheet-wrap { padding: 0; gap: 0; }
     .page {
@@ -299,102 +313,103 @@
 <script>
   const beds = [409, 410, 411, 412, 413, 414, 415, 416];
 
-  function chkPair(nameBase) {
+  function chkPair(field) {
     return `
-      <label class="chk"><input type="checkbox" name="${nameBase}_n"> N</label>
-      <label class="chk"><input type="checkbox" name="${nameBase}_s"> S</label>
+      <label class="chk"><input type="checkbox" data-field="${field}_nao"> N</label>
+      <label class="chk"><input type="checkbox" data-field="${field}_sim"> S</label>
     `;
   }
 
   function bedCard(bed) {
     return `
-    <div class="bed-card">
+    <div class="bed-card" data-bed="${bed}">
       <div class="row header-strip">
         <div class="cell"><span class="label">LEITO ${bed}</span></div>
-        <div class="cell wide"><span class="label">Data internação:</span><input type="text"></div>
-        <div class="cell wide"><span class="label">Idade/DN:</span><input type="text"></div>
+        <div class="cell wide"><span class="label">Data internação:</span><input type="text" data-field="dataInternacao"></div>
+        <div class="cell wide"><span class="label">Idade/DN:</span><input type="text" data-field="idadeDN"></div>
+        <div class="cell" style="flex: 0 0 auto;"><button type="button" class="clear-bed-btn no-print" data-clear-bed="${bed}">Limpar leito</button></div>
       </div>
 
       <div class="row">
-        <div class="cell xwide"><span class="label">Nome:</span><input type="text"></div>
-        <div class="cell xwide"><span class="label">Nome da mãe:</span><input type="text"></div>
+        <div class="cell xwide"><span class="label">Nome:</span><input type="text" data-field="nome"></div>
+        <div class="cell xwide"><span class="label">Nome da mãe:</span><input type="text" data-field="nomeMae"></div>
       </div>
 
       <div class="row alert-row">
-        <div class="cell"><span class="label">Alergias:</span>${chkPair('aler_' + bed)}</div>
+        <div class="cell"><span class="label">Alergias:</span>${chkPair('alergias')}</div>
         <div class="cell xwide">
           <span class="label">Dispositivos:</span>
-          <label class="chk"><input type="checkbox"> CVC</label>
-          <input type="text" style="max-width:10mm">
-          <label class="chk"><input type="checkbox"> TOT</label>
-          <input type="text" style="max-width:10mm">
-          <label class="chk"><input type="checkbox"> SVD</label>
-          <label class="chk"><input type="checkbox"> SNE</label>
-          <label class="chk"><input type="checkbox"> SNG</label>
-          <label class="chk"><input type="checkbox"> Shiley</label>
-          <label class="chk"><input type="checkbox"> Tenkhoff</label>
-          <label class="chk"><input type="checkbox"> Outro:</label>
-          <input type="text" style="max-width:16mm">
+          <label class="chk"><input type="checkbox" data-field="disp_cvc"> CVC</label>
+          <input type="text" data-field="disp_cvc_val" style="max-width:10mm">
+          <label class="chk"><input type="checkbox" data-field="disp_tot"> TOT</label>
+          <input type="text" data-field="disp_tot_val" style="max-width:10mm">
+          <label class="chk"><input type="checkbox" data-field="disp_svd"> SVD</label>
+          <label class="chk"><input type="checkbox" data-field="disp_sne"> SNE</label>
+          <label class="chk"><input type="checkbox" data-field="disp_sng"> SNG</label>
+          <label class="chk"><input type="checkbox" data-field="disp_shiley"> Shiley</label>
+          <label class="chk"><input type="checkbox" data-field="disp_tenkhoff"> Tenkhoff</label>
+          <label class="chk"><input type="checkbox" data-field="disp_outro"> Outro:</label>
+          <input type="text" data-field="disp_outro_val" style="max-width:16mm">
         </div>
       </div>
 
       <div class="row">
-        <div class="cell xwide"><span class="label section">S</span>Diagnósticos:<input type="text"></div>
+        <div class="cell xwide"><span class="label section">S</span>Diagnósticos:<input type="text" data-field="diagnosticos"></div>
       </div>
 
       <div class="row">
-        <div class="cell"><span class="label section">B</span>Antibióticos:${chkPair('atb_' + bed)}</div>
-        <div class="cell">Culturas:${chkPair('cult_' + bed)}</div>
-        <div class="cell">QT:${chkPair('qt_' + bed)}</div>
-        <div class="cell">Diálise:${chkPair('dial_' + bed)}</div>
-        <div class="cell">Sedação/Analgesia:${chkPair('sed_' + bed)}</div>
-        <div class="cell">Corr. eletrólitos:${chkPair('elet_' + bed)}</div>
+        <div class="cell"><span class="label section">B</span>Antibióticos:${chkPair('atb')}</div>
+        <div class="cell">Culturas:${chkPair('cult')}</div>
+        <div class="cell">QT:${chkPair('qt')}</div>
+        <div class="cell">Diálise:${chkPair('dial')}</div>
+        <div class="cell">Sedação/Analgesia:${chkPair('sed')}</div>
+        <div class="cell">Corr. eletrólitos:${chkPair('elet')}</div>
       </div>
 
       <div class="row">
-        <div class="cell"><span class="label section">A</span>Dieta:${chkPair('dieta_' + bed)}</div>
-        <div class="cell">O2:${chkPair('o2_' + bed)}</div>
-        <div class="cell">DVA:${chkPair('dva_' + bed)}</div>
+        <div class="cell"><span class="label section">A</span>Dieta:${chkPair('dieta')}</div>
+        <div class="cell">O2:${chkPair('o2')}</div>
+        <div class="cell">DVA:${chkPair('dva')}</div>
         <div class="cell wide">
           Transfusão:
-          <label class="chk"><input type="checkbox"> CH</label>
-          <label class="chk"><input type="checkbox"> CP</label>
-          <label class="chk"><input type="checkbox"> PFC</label>
-          <label class="chk"><input type="checkbox"> CRIO</label>
+          <label class="chk"><input type="checkbox" data-field="transf_ch"> CH</label>
+          <label class="chk"><input type="checkbox" data-field="transf_cp"> CP</label>
+          <label class="chk"><input type="checkbox" data-field="transf_pfc"> PFC</label>
+          <label class="chk"><input type="checkbox" data-field="transf_crio"> CRIO</label>
         </div>
       </div>
 
       <div class="row vent-row">
         <div class="cell xwide">
           <span class="label">Suporte ventilatório:</span>
-          <label class="chk"><input type="checkbox"> Ar ambiente</label>
-          <label class="chk"><input type="checkbox"> O2</label>
-          <label class="chk"><input type="checkbox"> VNI</label>
-          <label class="chk"><input type="checkbox"> VPM</label>
-          <span class="vent-field">Modo:<input type="text"></span>
-          <span class="vent-field">FiO2:<input type="text"></span>
-          <span class="vent-field">Pinsp/Epap:<input type="text"></span>
-          <span class="vent-field">Peep/Ipap:<input type="text"></span>
-          <span class="vent-field">Tins:<input type="text"></span>
-          <span class="vent-field">FR:<input type="text"></span>
+          <label class="chk"><input type="checkbox" data-field="vent_arambiente"> Ar ambiente</label>
+          <label class="chk"><input type="checkbox" data-field="vent_o2"> O2</label>
+          <label class="chk"><input type="checkbox" data-field="vent_vni"> VNI</label>
+          <label class="chk"><input type="checkbox" data-field="vent_vpm"> VPM</label>
+          <span class="vent-field">Modo:<input type="text" data-field="vent_modo"></span>
+          <span class="vent-field">FiO2:<input type="text" data-field="vent_fio2"></span>
+          <span class="vent-field">Pinsp/Epap:<input type="text" data-field="vent_pinsp_epap"></span>
+          <span class="vent-field">Peep/Ipap:<input type="text" data-field="vent_peep_ipap"></span>
+          <span class="vent-field">Tins:<input type="text" data-field="vent_tins"></span>
+          <span class="vent-field">FR:<input type="text" data-field="vent_fr"></span>
         </div>
       </div>
 
       <div class="row">
-        <div class="cell xwide"><span class="label section">R</span>Programação/Condutas:<input type="text"></div>
+        <div class="cell xwide"><span class="label section">R</span>Programação/Condutas:<input type="text" data-field="condutas"></div>
       </div>
       <div class="row">
-        <div class="cell xwide r-cont"><input type="text"></div>
+        <div class="cell xwide r-cont"><input type="text" data-field="condutas2"></div>
       </div>
       <div class="row">
-        <div class="cell wide">Exames pendentes:<input type="text"></div>
-        <div class="cell wide">Reavaliar:<input type="text"></div>
+        <div class="cell wide">Exames pendentes:<input type="text" data-field="examesPendentes"></div>
+        <div class="cell wide">Reavaliar:<input type="text" data-field="reavaliar"></div>
       </div>
       <div class="row">
-        <div class="cell xwide">Pendências:<input type="text"></div>
+        <div class="cell xwide">Pendências:<input type="text" data-field="pendencias"></div>
       </div>
       <div class="row">
-        <div class="cell wide">Alta:${chkPair('alta_' + bed)}<span class="vent-field">Leito:<input type="text" style="max-width:14mm"></span></div>
+        <div class="cell wide">Alta:${chkPair('alta')}<span class="vent-field">Leito:<input type="text" data-field="altaLeito" style="max-width:14mm"></span></div>
       </div>
 
       <div class="written-block">
@@ -410,7 +425,7 @@
 
       <div class="sign-row">
         <span class="label">Assinatura/CRM do plantonista:</span>
-        <input type="text">
+        <input type="text" data-field="assinatura">
       </div>
     </div>
     `;
@@ -430,7 +445,7 @@
           </div>
           ${pageNum === 1 ? `
           <div class="page-date">
-            <span class="label">Data:</span><input type="text" style="max-width:22mm">
+            <span class="label">Data:</span><input type="text" id="page-date" style="max-width:22mm">
           </div>` : '<div class="page-date"></div>'}
           <div class="pageno">Página ${pageNum}/${totalPages}</div>
         </div>
@@ -444,6 +459,24 @@
   document.getElementById('app').innerHTML = html;
 
   document.getElementById('print-btn').addEventListener('click', () => window.print());
+
+  function limparLeito(bed) {
+    const card = document.querySelector(`.bed-card[data-bed="${bed}"]`);
+    if (!card) return;
+    card.querySelectorAll('[data-field]').forEach(el => {
+      if (el.type === 'checkbox') el.checked = false;
+      else el.value = '';
+    });
+  }
+
+  document.addEventListener('click', (e) => {
+    const clearBtn = e.target.closest('.clear-bed-btn');
+    if (!clearBtn) return;
+    const bed = clearBtn.dataset.clearBed;
+    if (confirm(`Limpar todos os dados do leito ${bed}? Essa ação não pode ser desfeita.`)) {
+      limparLeito(bed);
+    }
+  });
 </script>
 </body>
 </html>
