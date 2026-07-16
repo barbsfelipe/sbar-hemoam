@@ -64,6 +64,11 @@
   }
   .toolbar button:hover { opacity: 0.9; }
   .toolbar .note { opacity: 0.9; }
+  .toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
 
   .sheet-wrap {
     display: flex;
@@ -305,7 +310,12 @@
 
 <div class="toolbar no-print">
   <div class="note">Protótipo — preencher os campos digitados de manhã, imprimir e completar a lápis/caneta à tarde e à noite.</div>
-  <button id="print-btn">Imprimir / Salvar PDF</button>
+  <div class="toolbar-actions">
+    <button type="button" id="save-btn">Salvar dados (.json)</button>
+    <button type="button" id="load-btn">Carregar dados (.json)</button>
+    <input type="file" id="load-input" accept="application/json,.json" style="display:none">
+    <button type="button" id="print-btn">Imprimir / Salvar PDF</button>
+  </div>
 </div>
 
 <div class="sheet-wrap" id="app"></div>
@@ -540,6 +550,49 @@
 
   document.addEventListener('input', salvarEstadoLocalDebounced);
   document.addEventListener('change', salvarEstadoLocalDebounced);
+
+  document.getElementById('save-btn').addEventListener('click', () => {
+    const dados = coletarEstado();
+    const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const hoje = new Date().toISOString().slice(0, 10);
+    const nomeArquivo = `isbar-utip-hemoam-${hoje}.json`;
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nomeArquivo;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    alert(`Dados salvos em ${nomeArquivo}`);
+  });
+
+  document.getElementById('load-btn').addEventListener('click', () => {
+    document.getElementById('load-input').click();
+  });
+
+  document.getElementById('load-input').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!confirm('Isso vai substituir os dados atuais na tela pelos dados do arquivo carregado. Continuar?')) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      let dados;
+      try {
+        dados = JSON.parse(reader.result);
+      } catch (err) {
+        alert('Arquivo inválido: não foi possível ler os dados. Nada foi alterado.');
+        return;
+      }
+      restaurarEstado(dados);
+      salvarEstadoLocal();
+    };
+    reader.onerror = () => {
+      alert('Não foi possível ler o arquivo selecionado. Nada foi alterado.');
+    };
+    reader.readAsText(file);
+  });
 
   restaurarEstadoLocal();
 </script>
