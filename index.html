@@ -70,6 +70,16 @@
     gap: 8px;
   }
 
+  #fsa-status {
+    font-size: 12px;
+    opacity: 0.9;
+  }
+  #fsa-erro {
+    font-size: 12px;
+    font-weight: 700;
+    color: #ffd166;
+  }
+
   .sheet-wrap {
     display: flex;
     flex-direction: column;
@@ -314,6 +324,11 @@
     <button type="button" id="save-btn">Salvar dados (.json)</button>
     <button type="button" id="load-btn">Carregar dados (.json)</button>
     <input type="file" id="load-input" accept="application/json,.json" style="display:none">
+    <button type="button" id="fsa-ativar-btn" style="display:none">Ativar salvamento automático</button>
+    <button type="button" id="fsa-retomar-btn" style="display:none">Clique para retomar o salvamento automático</button>
+    <button type="button" id="fsa-desativar-btn" style="display:none">Desativar salvamento automático</button>
+    <span id="fsa-status" style="display:none"></span>
+    <span id="fsa-erro" style="display:none"></span>
     <button type="button" id="print-btn">Imprimir / Salvar PDF</button>
   </div>
 </div>
