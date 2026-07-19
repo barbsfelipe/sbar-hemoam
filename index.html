@@ -548,6 +548,85 @@
     });
   }
 
+  const FSA_SUPORTADO = 'showSaveFilePicker' in window;
+  let fsaEstadoAtivo = false;
+  let fsaHandleAtual = null;
+
+  function fsaMostrarStatus(mensagem) {
+    const el = document.getElementById('fsa-status');
+    el.textContent = mensagem;
+    el.style.display = mensagem ? '' : 'none';
+  }
+
+  function fsaMostrarErro(mensagem) {
+    const el = document.getElementById('fsa-erro');
+    el.textContent = mensagem;
+    el.style.display = mensagem ? '' : 'none';
+  }
+
+  function fsaAtualizarBotoes({ mostrarAtivar = false, mostrarRetomar = false, mostrarDesativar = false } = {}) {
+    document.getElementById('fsa-ativar-btn').style.display = mostrarAtivar ? '' : 'none';
+    document.getElementById('fsa-retomar-btn').style.display = mostrarRetomar ? '' : 'none';
+    document.getElementById('fsa-desativar-btn').style.display = mostrarDesativar ? '' : 'none';
+  }
+
+  async function fsaEscreverArquivo(handle, dados) {
+    const writable = await handle.createWritable();
+    await writable.write(JSON.stringify(dados, null, 2));
+    await writable.close();
+  }
+
+  async function fsaLerArquivo(handle) {
+    const file = await handle.getFile();
+    const texto = await file.text();
+    if (!texto.trim()) return null;
+    return JSON.parse(texto);
+  }
+
+  function fsaAtivarAutosave(handle) {
+    fsaHandleAtual = handle;
+    fsaEstadoAtivo = true;
+    fsaMostrarErro('');
+    fsaMostrarStatus(`Salvamento automático ativo (${handle.name})`);
+    fsaAtualizarBotoes({ mostrarDesativar: true });
+  }
+
+  document.getElementById('fsa-ativar-btn').addEventListener('click', async () => {
+    let handle;
+    try {
+      handle = await window.showSaveFilePicker({
+        suggestedName: nomeArquivoPlantao(new Date()),
+        types: [{ description: 'Dados ISBAR', accept: { 'application/json': ['.json'] } }]
+      });
+    } catch (e) {
+      return; // usuário cancelou o seletor nativo
+    }
+
+    let dadosExistentes = null;
+    try {
+      dadosExistentes = await fsaLerArquivo(handle);
+    } catch (e) {
+      fsaMostrarErro('Não foi possível ler o arquivo selecionado. O salvamento automático não foi ativado.');
+      return;
+    }
+
+    if (dadosExistentes) {
+      const substituir = confirm('Isso vai substituir os dados atuais na tela pelos dados do arquivo selecionado. Continuar?');
+      if (substituir) {
+        restaurarEstado(dadosExistentes);
+        salvarEstadoLocal();
+      }
+    }
+
+    fsaAtivarAutosave(handle);
+    try {
+      await fsaEscreverArquivo(handle, coletarEstado());
+    } catch (e) {
+      fsaMostrarErro('Não foi possível salvar no arquivo compartilhado — os dados continuam salvos neste navegador.');
+    }
+    await fsaSalvarHandle(handle).catch(() => {});
+  });
+
   function coletarEstado() {
     const beds = {};
     document.querySelectorAll('.bed-card').forEach(card => {
@@ -660,6 +739,7 @@
     reader.readAsText(file);
   });
 
+  if (FSA_SUPORTADO) fsaAtualizarBotoes({ mostrarAtivar: true });
   restaurarEstadoLocal();
 </script>
 </body>
