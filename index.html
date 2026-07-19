@@ -215,6 +215,11 @@
     margin: 0;
   }
 
+  .detail-input {
+    max-width: 20mm;
+    flex: 0 1 auto;
+  }
+
   .header-strip {
     background: var(--header-bg);
     color: #fff;
@@ -341,7 +346,8 @@
   function chkPair(field) {
     return `
       <label class="chk"><input type="checkbox" data-field="${field}_nao"> N</label>
-      <label class="chk"><input type="checkbox" data-field="${field}_sim"> S</label>
+      <label class="chk"><input type="checkbox" data-field="${field}_sim" data-detail-toggle="${field}"> S</label>
+      <input type="text" data-field="${field}_detalhe" data-detail-input="${field}" class="detail-input" style="display:none">
     `;
   }
 
@@ -492,6 +498,7 @@
       if (el.type === 'checkbox') el.checked = false;
       else el.value = '';
     });
+    card.querySelectorAll('[data-detail-toggle]').forEach(atualizarDetalheVisibilidade);
   }
 
   const AUTOSAVE_KEY = 'hemoam-isbar-utip-rascunho';
@@ -670,19 +677,40 @@
     if (!dados || typeof dados !== 'object') return;
     const pageDateEl = document.getElementById('page-date');
     if (pageDateEl && typeof dados.pageDate === 'string') pageDateEl.value = dados.pageDate;
-    if (!dados.beds) return;
-    document.querySelectorAll('.bed-card').forEach(card => {
-      const bed = card.dataset.bed;
-      const campos = dados.beds[bed];
-      if (!campos) return;
-      card.querySelectorAll('[data-field]').forEach(el => {
-        if (!(el.dataset.field in campos)) return;
-        const valor = campos[el.dataset.field];
-        if (el.type === 'checkbox') el.checked = !!valor;
-        else el.value = valor;
+    if (dados.beds) {
+      document.querySelectorAll('.bed-card').forEach(card => {
+        const bed = card.dataset.bed;
+        const campos = dados.beds[bed];
+        if (!campos) return;
+        card.querySelectorAll('[data-field]').forEach(el => {
+          if (!(el.dataset.field in campos)) return;
+          const valor = campos[el.dataset.field];
+          if (el.type === 'checkbox') el.checked = !!valor;
+          else el.value = valor;
+        });
       });
-    });
+    }
+    sincronizarDetalhes();
   }
+
+  function sincronizarDetalhes() {
+    document.querySelectorAll('[data-detail-toggle]').forEach(atualizarDetalheVisibilidade);
+  }
+
+  function atualizarDetalheVisibilidade(simCheckbox) {
+    const field = simCheckbox.dataset.detailToggle;
+    if (!field) return;
+    const cell = simCheckbox.closest('.cell');
+    if (!cell) return;
+    const input = cell.querySelector(`[data-detail-input="${field}"]`);
+    if (!input) return;
+    input.style.display = simCheckbox.checked ? '' : 'none';
+  }
+
+  document.addEventListener('change', (e) => {
+    const cb = e.target.closest('[data-detail-toggle]');
+    if (cb) atualizarDetalheVisibilidade(cb);
+  });
 
   function salvarEstadoLocal() {
     try {
@@ -807,36 +835,72 @@
 
     fsaHandleAtual = handle;
     fsaAtualizarBotoes({ mostrarRetomar: true });
+    fsaAgendarRetomadaViaGesto();
   }
 
-  document.getElementById('fsa-retomar-btn').addEventListener('click', async () => {
+  let fsaRetomadaEmAndamento = false;
+  async function fsaRetomarComPermissao() {
+    if (fsaRetomadaEmAndamento) return;
     const handle = fsaHandleAtual;
-    if (!handle) return;
-    let permissao;
+    if (!handle || fsaEstadoAtivo) return;
+    fsaRetomadaEmAndamento = true;
     try {
-      permissao = await handle.requestPermission({ mode: 'readwrite' });
-    } catch (e) {
-      permissao = 'denied';
+      let permissao;
+      try {
+        permissao = await handle.requestPermission({ mode: 'readwrite' });
+      } catch (e) {
+        permissao = 'denied';
+      }
+      if (permissao !== 'granted') {
+        fsaAtualizarBotoes({ mostrarRetomar: true });
+        return;
+      }
+      try {
+        const dados = await fsaLerArquivo(handle);
+        if (dados) restaurarEstado(dados);
+        fsaAtivarAutosave(handle);
+      } catch (e) {
+        fsaMostrarErro('Não foi possível ler o arquivo compartilhado. O salvamento automático não foi retomado.');
+      }
+    } finally {
+      fsaRetomadaEmAndamento = false;
     }
-    if (permissao !== 'granted') {
-      fsaMostrarErro('Permissão não concedida — o salvamento automático não foi retomado.');
-      return;
-    }
-    try {
-      const dados = await fsaLerArquivo(handle);
-      if (dados) restaurarEstado(dados);
-      fsaAtivarAutosave(handle);
-    } catch (e) {
-      fsaMostrarErro('Não foi possível ler o arquivo compartilhado. O salvamento automático não foi retomado.');
-    }
+  }
+
+  function fsaAgendarRetomadaViaGesto() {
+    const tentar = () => {
+      document.removeEventListener('pointerdown', tentar, true);
+      document.removeEventListener('keydown', tentar, true);
+      fsaRetomarComPermissao();
+    };
+    document.addEventListener('pointerdown', tentar, true);
+    document.addEventListener('keydown', tentar, true);
+  }
+
+  document.getElementById('fsa-retomar-btn').addEventListener('click', () => {
+    fsaRetomarComPermissao();
   });
 
   document.getElementById('fsa-desativar-btn').addEventListener('click', () => {
     fsaDesativarAutosave();
   });
 
-  restaurarEstadoLocal();
-  fsaTentarRetomarAutomatico();
+  function preencherDataPadrao() {
+    const el = document.getElementById('page-date');
+    if (!el || el.value) return false;
+    const hoje = new Date();
+    const dd = String(hoje.getDate()).padStart(2, '0');
+    const mm = String(hoje.getMonth() + 1).padStart(2, '0');
+    const aaaa = hoje.getFullYear();
+    el.value = `${dd}/${mm}/${aaaa}`;
+    return true;
+  }
+
+  (async () => {
+    restaurarEstadoLocal();
+    await fsaTentarRetomarAutomatico();
+    if (preencherDataPadrao()) salvarEstadoTudo();
+  })();
 </script>
 </body>
 </html>
