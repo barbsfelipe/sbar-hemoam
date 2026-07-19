@@ -70,6 +70,16 @@
     gap: 8px;
   }
 
+  #fsa-status {
+    font-size: 12px;
+    opacity: 0.9;
+  }
+  #fsa-erro {
+    font-size: 12px;
+    font-weight: 700;
+    color: #ffd166;
+  }
+
   .sheet-wrap {
     display: flex;
     flex-direction: column;
@@ -314,6 +324,11 @@
     <button type="button" id="save-btn">Salvar dados (.json)</button>
     <button type="button" id="load-btn">Carregar dados (.json)</button>
     <input type="file" id="load-input" accept="application/json,.json" style="display:none">
+    <button type="button" id="fsa-ativar-btn" style="display:none">Ativar salvamento automático</button>
+    <button type="button" id="fsa-retomar-btn" style="display:none">Clique para retomar o salvamento automático</button>
+    <button type="button" id="fsa-desativar-btn" style="display:none">Desativar salvamento automático</button>
+    <span id="fsa-status" style="display:none"></span>
+    <span id="fsa-erro" style="display:none"></span>
     <button type="button" id="print-btn">Imprimir / Salvar PDF</button>
   </div>
 </div>
@@ -481,6 +496,159 @@
 
   const AUTOSAVE_KEY = 'hemoam-isbar-utip-rascunho';
 
+  function nomeArquivoPlantao(data) {
+    const dd = String(data.getDate()).padStart(2, '0');
+    const mm = String(data.getMonth() + 1).padStart(2, '0');
+    const aaaa = data.getFullYear();
+    return `plantão (${dd}-${mm}-${aaaa}).json`;
+  }
+
+  const FSA_DB_NAME = 'hemoam-isbar-fsa';
+  const FSA_STORE_NAME = 'handles';
+  const FSA_HANDLE_KEY = 'plantao-arquivo';
+
+  function fsaAbrirDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(FSA_DB_NAME, 1);
+      req.onupgradeneeded = () => {
+        req.result.createObjectStore(FSA_STORE_NAME);
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function fsaSalvarHandle(handle) {
+    const db = await fsaAbrirDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(FSA_STORE_NAME, 'readwrite');
+      tx.objectStore(FSA_STORE_NAME).put(handle, FSA_HANDLE_KEY);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  async function fsaCarregarHandle() {
+    const db = await fsaAbrirDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(FSA_STORE_NAME, 'readonly');
+      const req = tx.objectStore(FSA_STORE_NAME).get(FSA_HANDLE_KEY);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function fsaRemoverHandle() {
+    const db = await fsaAbrirDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(FSA_STORE_NAME, 'readwrite');
+      tx.objectStore(FSA_STORE_NAME).delete(FSA_HANDLE_KEY);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  const FSA_SUPORTADO = 'showSaveFilePicker' in window;
+  let fsaEstadoAtivo = false;
+  let fsaHandleAtual = null;
+
+  function fsaMostrarStatus(mensagem) {
+    const el = document.getElementById('fsa-status');
+    el.textContent = mensagem;
+    el.style.display = mensagem ? '' : 'none';
+  }
+
+  function fsaMostrarErro(mensagem) {
+    const el = document.getElementById('fsa-erro');
+    el.textContent = mensagem;
+    el.style.display = mensagem ? '' : 'none';
+  }
+
+  function fsaAtualizarBotoes({ mostrarAtivar = false, mostrarRetomar = false, mostrarDesativar = false } = {}) {
+    document.getElementById('fsa-ativar-btn').style.display = mostrarAtivar ? '' : 'none';
+    document.getElementById('fsa-retomar-btn').style.display = mostrarRetomar ? '' : 'none';
+    document.getElementById('fsa-desativar-btn').style.display = mostrarDesativar ? '' : 'none';
+  }
+
+  async function fsaEscreverArquivo(handle, dados) {
+    const writable = await handle.createWritable();
+    await writable.write(JSON.stringify(dados, null, 2));
+    await writable.close();
+  }
+
+  async function fsaLerArquivo(handle) {
+    const file = await handle.getFile();
+    const texto = await file.text();
+    if (!texto.trim()) return null;
+    return JSON.parse(texto);
+  }
+
+  function fsaAtivarAutosave(handle) {
+    fsaHandleAtual = handle;
+    fsaEstadoAtivo = true;
+    fsaMostrarErro('');
+    fsaMostrarStatus(`Salvamento automático ativo (${handle.name})`);
+    fsaAtualizarBotoes({ mostrarDesativar: true });
+  }
+
+  async function fsaSalvarNoArquivo() {
+    if (!fsaEstadoAtivo || !fsaHandleAtual) return;
+    try {
+      await fsaEscreverArquivo(fsaHandleAtual, coletarEstado());
+      fsaMostrarErro('');
+    } catch (e) {
+      fsaMostrarErro('Não foi possível salvar no arquivo compartilhado — os dados continuam salvos neste navegador.');
+    }
+  }
+
+  function salvarEstadoTudo() {
+    salvarEstadoLocal();
+    fsaSalvarNoArquivo();
+  }
+
+  document.getElementById('fsa-ativar-btn').addEventListener('click', async () => {
+    let handle;
+    try {
+      handle = await window.showSaveFilePicker({
+        suggestedName: nomeArquivoPlantao(new Date()),
+        types: [{ description: 'Dados ISBAR', accept: { 'application/json': ['.json'] } }]
+      });
+    } catch (e) {
+      return; // usuário cancelou o seletor nativo
+    }
+
+    let dadosExistentes = null;
+    try {
+      dadosExistentes = await fsaLerArquivo(handle);
+    } catch (e) {
+      fsaMostrarErro('Não foi possível ler o arquivo selecionado. O salvamento automático não foi ativado.');
+      return;
+    }
+
+    let substituir = true;
+    if (dadosExistentes) {
+      substituir = confirm('Isso vai substituir os dados atuais na tela pelos dados do arquivo selecionado. Continuar?');
+      if (substituir) {
+        restaurarEstado(dadosExistentes);
+        salvarEstadoLocal();
+      }
+    }
+
+    fsaAtivarAutosave(handle);
+    if (!dadosExistentes || substituir) {
+      try {
+        await fsaEscreverArquivo(handle, coletarEstado());
+      } catch (e) {
+        fsaMostrarErro('Não foi possível salvar no arquivo compartilhado — os dados continuam salvos neste navegador.');
+      }
+    }
+    try {
+      await fsaSalvarHandle(handle);
+    } catch (e) {
+      console.warn('Não foi possível salvar a referência do arquivo para retomada automática:', e);
+    }
+  });
+
   function coletarEstado() {
     const beds = {};
     document.querySelectorAll('.bed-card').forEach(card => {
@@ -525,7 +693,7 @@
   let salvarEstadoLocalTimeout = null;
   function salvarEstadoLocalDebounced() {
     clearTimeout(salvarEstadoLocalTimeout);
-    salvarEstadoLocalTimeout = setTimeout(salvarEstadoLocal, 400);
+    salvarEstadoLocalTimeout = setTimeout(salvarEstadoTudo, 400);
   }
 
   function restaurarEstadoLocal() {
@@ -544,7 +712,7 @@
     const bed = clearBtn.dataset.clearBed;
     if (confirm(`Limpar todos os dados do leito ${bed}? Essa ação não pode ser desfeita.`)) {
       limparLeito(bed);
-      salvarEstadoLocal();
+      salvarEstadoTudo();
     }
   });
 
@@ -555,8 +723,7 @@
     const dados = coletarEstado();
     const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const hoje = new Date().toISOString().slice(0, 10);
-    const nomeArquivo = `isbar-utip-hemoam-${hoje}.json`;
+    const nomeArquivo = nomeArquivoPlantao(new Date());
     const a = document.createElement('a');
     a.href = url;
     a.download = nomeArquivo;
@@ -586,7 +753,7 @@
         return;
       }
       restaurarEstado(dados);
-      salvarEstadoLocal();
+      salvarEstadoTudo();
     };
     reader.onerror = () => {
       alert('Não foi possível ler o arquivo selecionado. Nada foi alterado.');
@@ -594,7 +761,82 @@
     reader.readAsText(file);
   });
 
+  function fsaDesativarAutosave() {
+    fsaHandleAtual = null;
+    fsaEstadoAtivo = false;
+    fsaMostrarStatus('');
+    fsaMostrarErro('');
+    fsaRemoverHandle().catch(() => {});
+    fsaAtualizarBotoes({ mostrarAtivar: true });
+  }
+
+  async function fsaTentarRetomarAutomatico() {
+    if (!FSA_SUPORTADO) return;
+    let handle;
+    try {
+      handle = await fsaCarregarHandle();
+    } catch (e) {
+      fsaAtualizarBotoes({ mostrarAtivar: true });
+      return;
+    }
+    if (!handle) {
+      fsaAtualizarBotoes({ mostrarAtivar: true });
+      return;
+    }
+
+    let permissao;
+    try {
+      permissao = await handle.queryPermission({ mode: 'readwrite' });
+    } catch (e) {
+      await fsaRemoverHandle().catch(() => {});
+      fsaAtualizarBotoes({ mostrarAtivar: true });
+      return;
+    }
+
+    if (permissao === 'granted') {
+      try {
+        const dados = await fsaLerArquivo(handle);
+        if (dados) restaurarEstado(dados);
+        fsaAtivarAutosave(handle);
+      } catch (e) {
+        await fsaRemoverHandle().catch(() => {});
+        fsaAtualizarBotoes({ mostrarAtivar: true });
+      }
+      return;
+    }
+
+    fsaHandleAtual = handle;
+    fsaAtualizarBotoes({ mostrarRetomar: true });
+  }
+
+  document.getElementById('fsa-retomar-btn').addEventListener('click', async () => {
+    const handle = fsaHandleAtual;
+    if (!handle) return;
+    let permissao;
+    try {
+      permissao = await handle.requestPermission({ mode: 'readwrite' });
+    } catch (e) {
+      permissao = 'denied';
+    }
+    if (permissao !== 'granted') {
+      fsaMostrarErro('Permissão não concedida — o salvamento automático não foi retomado.');
+      return;
+    }
+    try {
+      const dados = await fsaLerArquivo(handle);
+      if (dados) restaurarEstado(dados);
+      fsaAtivarAutosave(handle);
+    } catch (e) {
+      fsaMostrarErro('Não foi possível ler o arquivo compartilhado. O salvamento automático não foi retomado.');
+    }
+  });
+
+  document.getElementById('fsa-desativar-btn').addEventListener('click', () => {
+    fsaDesativarAutosave();
+  });
+
   restaurarEstadoLocal();
+  fsaTentarRetomarAutomatico();
 </script>
 </body>
 </html>
