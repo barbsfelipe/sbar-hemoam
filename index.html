@@ -754,8 +754,81 @@
     reader.readAsText(file);
   });
 
-  if (FSA_SUPORTADO) fsaAtualizarBotoes({ mostrarAtivar: true });
+  function fsaDesativarAutosave() {
+    fsaHandleAtual = null;
+    fsaEstadoAtivo = false;
+    fsaMostrarStatus('');
+    fsaMostrarErro('');
+    fsaRemoverHandle().catch(() => {});
+    fsaAtualizarBotoes({ mostrarAtivar: true });
+  }
+
+  async function fsaTentarRetomarAutomatico() {
+    if (!FSA_SUPORTADO) return;
+    let handle;
+    try {
+      handle = await fsaCarregarHandle();
+    } catch (e) {
+      return;
+    }
+    if (!handle) {
+      fsaAtualizarBotoes({ mostrarAtivar: true });
+      return;
+    }
+
+    let permissao;
+    try {
+      permissao = await handle.queryPermission({ mode: 'readwrite' });
+    } catch (e) {
+      await fsaRemoverHandle().catch(() => {});
+      fsaAtualizarBotoes({ mostrarAtivar: true });
+      return;
+    }
+
+    if (permissao === 'granted') {
+      try {
+        const dados = await fsaLerArquivo(handle);
+        if (dados) restaurarEstado(dados);
+        fsaAtivarAutosave(handle);
+      } catch (e) {
+        await fsaRemoverHandle().catch(() => {});
+        fsaAtualizarBotoes({ mostrarAtivar: true });
+      }
+      return;
+    }
+
+    fsaHandleAtual = handle;
+    fsaAtualizarBotoes({ mostrarRetomar: true });
+  }
+
+  document.getElementById('fsa-retomar-btn').addEventListener('click', async () => {
+    const handle = fsaHandleAtual;
+    if (!handle) return;
+    let permissao;
+    try {
+      permissao = await handle.requestPermission({ mode: 'readwrite' });
+    } catch (e) {
+      permissao = 'denied';
+    }
+    if (permissao !== 'granted') {
+      fsaMostrarErro('Permissão não concedida — o salvamento automático não foi retomado.');
+      return;
+    }
+    try {
+      const dados = await fsaLerArquivo(handle);
+      if (dados) restaurarEstado(dados);
+      fsaAtivarAutosave(handle);
+    } catch (e) {
+      fsaMostrarErro('Não foi possível ler o arquivo compartilhado. O salvamento automático não foi retomado.');
+    }
+  });
+
+  document.getElementById('fsa-desativar-btn').addEventListener('click', () => {
+    fsaDesativarAutosave();
+  });
+
   restaurarEstadoLocal();
+  fsaTentarRetomarAutomatico();
 </script>
 </body>
 </html>
