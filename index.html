@@ -488,6 +488,51 @@
     return `plantão (${dd}-${mm}-${aaaa}).json`;
   }
 
+  const FSA_DB_NAME = 'hemoam-isbar-fsa';
+  const FSA_STORE_NAME = 'handles';
+  const FSA_HANDLE_KEY = 'plantao-arquivo';
+
+  function fsaAbrirDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(FSA_DB_NAME, 1);
+      req.onupgradeneeded = () => {
+        req.result.createObjectStore(FSA_STORE_NAME);
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function fsaSalvarHandle(handle) {
+    const db = await fsaAbrirDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(FSA_STORE_NAME, 'readwrite');
+      tx.objectStore(FSA_STORE_NAME).put(handle, FSA_HANDLE_KEY);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  async function fsaCarregarHandle() {
+    const db = await fsaAbrirDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(FSA_STORE_NAME, 'readonly');
+      const req = tx.objectStore(FSA_STORE_NAME).get(FSA_HANDLE_KEY);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function fsaRemoverHandle() {
+    const db = await fsaAbrirDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(FSA_STORE_NAME, 'readwrite');
+      tx.objectStore(FSA_STORE_NAME).delete(FSA_HANDLE_KEY);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
   function coletarEstado() {
     const beds = {};
     document.querySelectorAll('.bed-card').forEach(card => {
