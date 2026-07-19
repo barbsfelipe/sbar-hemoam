@@ -481,6 +481,13 @@
 
   const AUTOSAVE_KEY = 'hemoam-isbar-utip-rascunho';
 
+  function nomeArquivoPlantao(data) {
+    const dd = String(data.getDate()).padStart(2, '0');
+    const mm = String(data.getMonth() + 1).padStart(2, '0');
+    const aaaa = data.getFullYear();
+    return `plantão (${dd}-${mm}-${aaaa}).json`;
+  }
+
   function coletarEstado() {
     const beds = {};
     document.querySelectorAll('.bed-card').forEach(card => {
@@ -555,8 +562,7 @@
     const dados = coletarEstado();
     const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const hoje = new Date().toISOString().slice(0, 10);
-    const nomeArquivo = `isbar-utip-hemoam-${hoje}.json`;
+    const nomeArquivo = nomeArquivoPlantao(new Date());
     const a = document.createElement('a');
     a.href = url;
     a.download = nomeArquivo;
