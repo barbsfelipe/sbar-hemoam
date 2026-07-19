@@ -591,6 +591,21 @@
     fsaAtualizarBotoes({ mostrarDesativar: true });
   }
 
+  async function fsaSalvarNoArquivo() {
+    if (!fsaEstadoAtivo || !fsaHandleAtual) return;
+    try {
+      await fsaEscreverArquivo(fsaHandleAtual, coletarEstado());
+      fsaMostrarErro('');
+    } catch (e) {
+      fsaMostrarErro('Não foi possível salvar no arquivo compartilhado — os dados continuam salvos neste navegador.');
+    }
+  }
+
+  function salvarEstadoTudo() {
+    salvarEstadoLocal();
+    fsaSalvarNoArquivo();
+  }
+
   document.getElementById('fsa-ativar-btn').addEventListener('click', async () => {
     let handle;
     try {
@@ -671,7 +686,7 @@
   let salvarEstadoLocalTimeout = null;
   function salvarEstadoLocalDebounced() {
     clearTimeout(salvarEstadoLocalTimeout);
-    salvarEstadoLocalTimeout = setTimeout(salvarEstadoLocal, 400);
+    salvarEstadoLocalTimeout = setTimeout(salvarEstadoTudo, 400);
   }
 
   function restaurarEstadoLocal() {
@@ -690,7 +705,7 @@
     const bed = clearBtn.dataset.clearBed;
     if (confirm(`Limpar todos os dados do leito ${bed}? Essa ação não pode ser desfeita.`)) {
       limparLeito(bed);
-      salvarEstadoLocal();
+      salvarEstadoTudo();
     }
   });
 
@@ -731,7 +746,7 @@
         return;
       }
       restaurarEstado(dados);
-      salvarEstadoLocal();
+      salvarEstadoTudo();
     };
     reader.onerror = () => {
       alert('Não foi possível ler o arquivo selecionado. Nada foi alterado.');
