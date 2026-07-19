@@ -625,8 +625,9 @@
       return;
     }
 
+    let substituir = true;
     if (dadosExistentes) {
-      const substituir = confirm('Isso vai substituir os dados atuais na tela pelos dados do arquivo selecionado. Continuar?');
+      substituir = confirm('Isso vai substituir os dados atuais na tela pelos dados do arquivo selecionado. Continuar?');
       if (substituir) {
         restaurarEstado(dadosExistentes);
         salvarEstadoLocal();
@@ -634,12 +635,18 @@
     }
 
     fsaAtivarAutosave(handle);
-    try {
-      await fsaEscreverArquivo(handle, coletarEstado());
-    } catch (e) {
-      fsaMostrarErro('Não foi possível salvar no arquivo compartilhado — os dados continuam salvos neste navegador.');
+    if (!dadosExistentes || substituir) {
+      try {
+        await fsaEscreverArquivo(handle, coletarEstado());
+      } catch (e) {
+        fsaMostrarErro('Não foi possível salvar no arquivo compartilhado — os dados continuam salvos neste navegador.');
+      }
     }
-    await fsaSalvarHandle(handle).catch(() => {});
+    try {
+      await fsaSalvarHandle(handle);
+    } catch (e) {
+      console.warn('Não foi possível salvar a referência do arquivo para retomada automática:', e);
+    }
   });
 
   function coletarEstado() {
@@ -769,6 +776,7 @@
     try {
       handle = await fsaCarregarHandle();
     } catch (e) {
+      fsaAtualizarBotoes({ mostrarAtivar: true });
       return;
     }
     if (!handle) {
