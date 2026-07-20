@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ISBAR UTI Pediátrica - HEMOAM</title>
+<title>Checklist de Visita Multiprofissional - HEMOAM</title>
 <style>
   :root {
     --paper: #ffffff;
@@ -75,13 +75,14 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-wrap: wrap;
   }
 
-  #fsa-status {
+  #fsa-status, #isbar-fonte-status {
     font-size: 12px;
     opacity: 0.9;
   }
-  #fsa-erro {
+  #fsa-erro, #isbar-fonte-erro {
     font-size: 12px;
     font-weight: 700;
     color: #ffd166;
@@ -125,7 +126,7 @@
     flex: 1;
   }
   .page-header .title .t1 {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 800;
     color: var(--header-bg);
   }
@@ -140,12 +141,18 @@
     text-align: right;
   }
   .page-header .page-date {
-    font-size: 9px;
+    font-size: 8.5px;
     color: var(--ink);
     display: flex;
     align-items: center;
-    gap: 3px;
+    flex-wrap: wrap;
+    gap: 3px 6px;
+    max-width: 130mm;
     margin-right: 8mm;
+  }
+  .page-header .page-date .freq {
+    white-space: nowrap;
+    color: var(--muted);
   }
   .page-header .page-date input[type="text"] {
     border-bottom: 0.25mm dotted #7a7a7a;
@@ -155,16 +162,15 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 1.2mm;
+    gap: 1.6mm;
     min-height: 0;
   }
 
-  .bed-card {
-    flex: 1;
+  .bed-card, .sign-card {
+    flex: 0 0 auto;
     display: flex;
     flex-direction: column;
     border: 0.4mm solid var(--line-strong);
-    min-height: 0;
     break-inside: avoid;
     page-break-inside: avoid;
   }
@@ -176,13 +182,13 @@
   .row:last-child { border-bottom: none; }
   .cell {
     flex: 1;
-    padding: 0.4mm 2mm;
+    padding: 0.8mm 2mm;
     border-right: 0.2mm solid var(--line);
     display: flex;
     align-items: center;
     gap: 3px;
-    font-size: 8.3px;
-    line-height: 1.2;
+    font-size: 8.8px;
+    line-height: 1.27;
   }
   .cell.r-cont { padding-top: 0; }
   .cell:last-child { border-right: none; }
@@ -248,61 +254,13 @@
   }
   .header-strip .clear-bed-btn:hover { background: rgba(255,255,255,0.15); }
 
-  .alert-row {
-    background: var(--alert-bg);
-    border-top: 0.3mm solid var(--alert-border);
-    border-bottom: 0.3mm solid var(--alert-border);
-    flex-wrap: wrap;
-  }
-  .alert-row .cell { border-right-color: rgba(192,57,43,0.35); }
-  .alert-row .label { color: var(--alert-border); }
-
-  .vent-row .cell { gap: 5px; }
-  .vent-row input[type="text"] { min-width: 10mm; }
-  .vent-field { display:flex; align-items:center; gap:2px; white-space:nowrap; }
-
-  .written-block {
-    flex: 1.15;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    border-top: 0.3mm solid var(--line-strong);
-  }
-  .written-heading {
-    display: flex;
-    font-size: 8px;
+  .sign-heading {
+    padding: 0.6mm 2mm 0.2mm;
+    font-size: 10px;
     font-weight: 800;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    color: var(--header-bg);
+    border-bottom: 0.2mm solid var(--line);
   }
-  .written-heading > div { flex: 1; padding: 0.5mm 2mm 0; }
-  .written-heading > div:first-child { border-right: 0.2mm solid var(--line); }
-
-  .written-cols {
-    flex: 1;
-    display: flex;
-    min-height: 29mm;
-  }
-  .written-col {
-    flex: 1;
-    padding: 0 2mm;
-    background-image: linear-gradient(var(--line) 1px, transparent 1px);
-    background-size: 100% 5.45mm;
-    background-position: 0 5.2mm;
-    background-repeat: repeat;
-  }
-  .written-col:first-child { border-right: 0.2mm solid var(--line); }
-
-  .sign-row {
-    border-top: 0.3mm solid var(--line-strong);
-    font-size: 8px;
-    padding: 0.3mm 2mm;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-  .sign-row input[type="text"] { flex: 1; }
 
   @media print {
     .toolbar,
@@ -331,8 +289,9 @@
 <body>
 
 <div class="toolbar no-print">
-  <div class="note">Preencher os campos digitados de manhã, imprimir e completar a lápis/caneta à tarde e à noite.
-    <a class="tool-link" href="checklist-visita-multi.html">Checklist de Visita Multiprofissional →</a>
+  <div class="note">
+    Preencher durante a visita multiprofissional semanal e coletar as assinaturas dos presentes ao final.
+    <a class="tool-link" href="index.html">ISBAR (passagem de plantão) →</a>
   </div>
   <div class="toolbar-actions">
     <button type="button" id="save-btn">Salvar dados (.json)</button>
@@ -343,6 +302,12 @@
     <button type="button" id="fsa-desativar-btn" style="display:none">Desativar salvamento automático</button>
     <span id="fsa-status" style="display:none"></span>
     <span id="fsa-erro" style="display:none"></span>
+    <button type="button" id="isbar-fonte-vincular-btn" style="display:none">Vincular arquivo do ISBAR</button>
+    <button type="button" id="isbar-fonte-retomar-btn" style="display:none">Clique para atualizar dados do ISBAR</button>
+    <button type="button" id="isbar-fonte-atualizar-btn" style="display:none">Atualizar dados do ISBAR</button>
+    <button type="button" id="isbar-fonte-desvincular-btn" style="display:none">Desvincular ISBAR</button>
+    <span id="isbar-fonte-status" style="display:none"></span>
+    <span id="isbar-fonte-erro" style="display:none"></span>
     <button type="button" id="print-btn">Imprimir / Salvar PDF</button>
   </div>
 </div>
@@ -352,11 +317,35 @@
 <script>
   const beds = [409, 410, 411, 412, 413, 414, 415, 416];
 
-  function chkPair(field) {
+  function snPair(field) {
     return `
+      <label class="chk"><input type="checkbox" data-field="${field}_sim"> S</label>
       <label class="chk"><input type="checkbox" data-field="${field}_nao"> N</label>
+    `;
+  }
+
+  function snNaTriple(field) {
+    return `
+      <label class="chk"><input type="checkbox" data-field="${field}_sim"> S</label>
+      <label class="chk"><input type="checkbox" data-field="${field}_nao"> N</label>
+      <label class="chk"><input type="checkbox" data-field="${field}_na"> NA</label>
+    `;
+  }
+
+  function snDetailPair(field) {
+    return `
       <label class="chk"><input type="checkbox" data-field="${field}_sim" data-detail-toggle="${field}"> S</label>
       <input type="text" data-field="${field}_detalhe" data-detail-input="${field}" class="detail-input" style="display:none">
+      <label class="chk"><input type="checkbox" data-field="${field}_nao"> N</label>
+    `;
+  }
+
+  function snDetailNaTriple(field) {
+    return `
+      <label class="chk"><input type="checkbox" data-field="${field}_sim" data-detail-toggle="${field}"> S</label>
+      <input type="text" data-field="${field}_detalhe" data-detail-input="${field}" class="detail-input" style="display:none">
+      <label class="chk"><input type="checkbox" data-field="${field}_nao"> N</label>
+      <label class="chk"><input type="checkbox" data-field="${field}_na"> NA</label>
     `;
   }
 
@@ -365,133 +354,170 @@
     <div class="bed-card" data-bed="${bed}">
       <div class="row header-strip">
         <div class="cell"><span class="label">LEITO ${bed}</span></div>
-        <div class="cell wide"><span class="label">Data internação:</span><input type="text" data-field="dataInternacao"></div>
-        <div class="cell wide"><span class="label">Idade/DN:</span><input type="text" data-field="idadeDN"></div>
+        <div class="cell xwide"><span class="label">Paciente:</span><input type="text" data-field="paciente"></div>
+        <div class="cell"><span class="label">DN:</span><input type="text" data-field="dn" style="max-width:22mm"></div>
+        <div class="cell"><span class="label">Peso:</span><input type="text" data-field="peso" style="max-width:14mm"> kg</div>
         <div class="cell" style="flex: 0 0 auto;"><button type="button" class="clear-bed-btn no-print" data-clear-bed="${bed}">Limpar leito</button></div>
       </div>
 
       <div class="row">
-        <div class="cell xwide"><span class="label">Nome:</span><input type="text" data-field="nome"></div>
-        <div class="cell xwide"><span class="label">Nome da mãe:</span><input type="text" data-field="nomeMae"></div>
+        <div class="cell xwide"><span class="label">Diagnósticos:</span><input type="text" data-field="diagnosticos"></div>
+        <div class="cell"><span class="label">Dia de UTI:</span><input type="text" data-field="diaUti" style="max-width:14mm"></div>
       </div>
 
-      <div class="row alert-row">
-        <div class="cell"><span class="label">Alergias:</span>${chkPair('alergias')}</div>
+      <div class="row">
         <div class="cell xwide">
           <span class="label">Dispositivos:</span>
           <label class="chk"><input type="checkbox" data-field="disp_cvc"> CVC</label>
-          <input type="text" data-field="disp_cvc_val" style="max-width:10mm">
           <label class="chk"><input type="checkbox" data-field="disp_tot"> TOT</label>
-          <input type="text" data-field="disp_tot_val" style="max-width:10mm">
           <label class="chk"><input type="checkbox" data-field="disp_svd"> SVD</label>
           <label class="chk"><input type="checkbox" data-field="disp_sne"> SNE</label>
           <label class="chk"><input type="checkbox" data-field="disp_sng"> SNG</label>
           <label class="chk"><input type="checkbox" data-field="disp_shiley"> Shiley</label>
           <label class="chk"><input type="checkbox" data-field="disp_tenkhoff"> Tenkhoff</label>
+          <label class="chk"><input type="checkbox" data-field="disp_nenhum"> Nenhum</label>
           <label class="chk"><input type="checkbox" data-field="disp_outro"> Outro:</label>
           <input type="text" data-field="disp_outro_val" style="max-width:16mm">
         </div>
+        <div class="cell wide">Avaliados hoje p/ retirada:${snPair('avaliadosRetirada')}</div>
       </div>
 
       <div class="row">
-        <div class="cell xwide"><span class="label section">S</span>Diagnósticos:<input type="text" data-field="diagnosticos"></div>
-      </div>
-
-      <div class="row">
-        <div class="cell"><span class="label section">B</span>Antibióticos:${chkPair('atb')}</div>
-        <div class="cell">Culturas:${chkPair('cult')}</div>
-        <div class="cell">QT:${chkPair('qt')}</div>
-        <div class="cell">Diálise:${chkPair('dial')}</div>
-        <div class="cell">Sedação/Analgesia:${chkPair('sed')}</div>
-        <div class="cell">Corr. eletrólitos:${chkPair('elet')}</div>
-      </div>
-
-      <div class="row">
-        <div class="cell"><span class="label section">A</span>Dieta:${chkPair('dieta')}</div>
-        <div class="cell">O2:${chkPair('o2')}</div>
-        <div class="cell">DVA:${chkPair('dva')}</div>
         <div class="cell wide">
-          Transfusão:
-          <label class="chk"><input type="checkbox" data-field="transf_ch"> CH</label>
-          <label class="chk"><input type="checkbox" data-field="transf_cp"> CP</label>
-          <label class="chk"><input type="checkbox" data-field="transf_pfc"> PFC</label>
-          <label class="chk"><input type="checkbox" data-field="transf_crio"> CRIO</label>
+          <span class="label">Dieta/Nutrição:</span>
+          <label class="chk"><input type="checkbox" data-field="dieta_vo"> VO</label>
+          <label class="chk"><input type="checkbox" data-field="dieta_snesng"> SNE/SNG</label>
+          <label class="chk"><input type="checkbox" data-field="dieta_npt"> NPT</label>
+          <label class="chk"><input type="checkbox" data-field="dieta_jejum"> Jejum</label>
         </div>
-      </div>
-
-      <div class="row vent-row">
-        <div class="cell xwide">
-          <span class="label">Suporte ventilatório:</span>
-          <label class="chk"><input type="checkbox" data-field="vent_arambiente"> Ar ambiente</label>
-          <label class="chk"><input type="checkbox" data-field="vent_o2"> O2</label>
-          <label class="chk"><input type="checkbox" data-field="vent_vni"> VNI</label>
-          <label class="chk"><input type="checkbox" data-field="vent_vpm"> VPM</label>
-          <span class="vent-field">Modo:<input type="text" data-field="vent_modo"></span>
-          <span class="vent-field">FiO2:<input type="text" data-field="vent_fio2"></span>
-          <span class="vent-field">Pinsp/Epap:<input type="text" data-field="vent_pinsp_epap"></span>
-          <span class="vent-field">Peep/Ipap:<input type="text" data-field="vent_peep_ipap"></span>
-          <span class="vent-field">Tins:<input type="text" data-field="vent_tins"></span>
-          <span class="vent-field">FR:<input type="text" data-field="vent_fr"></span>
+        <div class="cell">Meta cal/kg:<input type="text" data-field="metaCal" style="max-width:12mm"></div>
+        <div class="cell">
+          Aceitação:
+          <label class="chk"><input type="checkbox" data-field="aceitacao_boa"> Boa</label>
+          <label class="chk"><input type="checkbox" data-field="aceitacao_parcial"> Parcial</label>
+          <label class="chk"><input type="checkbox" data-field="aceitacao_ruim"> Ruim</label>
         </div>
+        <div class="cell">Fono:${snDetailNaTriple('fono')}</div>
       </div>
 
       <div class="row">
-        <div class="cell xwide"><span class="label section">R</span>Programação/Condutas:<input type="text" data-field="condutas"></div>
-      </div>
-      <div class="row">
-        <div class="cell xwide r-cont"><input type="text" data-field="condutas2"></div>
-      </div>
-      <div class="row">
-        <div class="cell wide">Exames pendentes:<input type="text" data-field="examesPendentes"></div>
-        <div class="cell wide">Reavaliar:<input type="text" data-field="reavaliar"></div>
-      </div>
-      <div class="row">
-        <div class="cell xwide">Pendências:<input type="text" data-field="pendencias"></div>
-      </div>
-      <div class="row">
-        <div class="cell wide">Alta:${chkPair('alta')}<span class="vent-field">Leito:<input type="text" data-field="altaLeito" style="max-width:14mm"></span></div>
+        <div class="cell wide">
+          <span class="label">Sedação/Analgesia:</span>
+          <label class="chk"><input type="checkbox" data-field="sed_naousa"> Não usa</label>
+        </div>
+        <div class="cell">Comfort B alvo/atual:<input type="text" data-field="comfortAlvo" style="max-width:8mm">/<input type="text" data-field="comfortAtual" style="max-width:8mm"></div>
+        <div class="cell">Dor (escala):<input type="text" data-field="dor" style="max-width:10mm"></div>
+        <div class="cell xwide">Fármacos:<input type="text" data-field="farmacos"></div>
       </div>
 
-      <div class="written-block">
-        <div class="written-heading">
-          <div>Intercorrências / evolução — TARDE</div>
-          <div>Intercorrências / evolução — NOITE</div>
-        </div>
-        <div class="written-cols">
-          <div class="written-col"></div>
-          <div class="written-col"></div>
-        </div>
+      <div class="row">
+        <div class="cell"><span class="label">Profilaxias — TEV:</span>${snNaTriple('tev')}</div>
+        <div class="cell">Úlcera de estresse:${snPair('ulcera')}</div>
+        <div class="cell">PAV:${snDetailNaTriple('pav')}</div>
+        <div class="cell">Isolamento:${snDetailPair('isolamento')}</div>
       </div>
 
-      <div class="sign-row">
-        <span class="label">Assinatura/CRM do plantonista:</span>
-        <input type="text" data-field="assinatura">
+      <div class="row">
+        <div class="cell wide">
+          <span class="label">ATB em uso:</span><input type="text" data-field="atbUso">
+          <label class="chk"><input type="checkbox" data-field="atb_nenhum"> Nenhum</label>
+        </div>
+        <div class="cell">Descalonamento?${snNaTriple('descalonamento')}</div>
+        <div class="cell">Cultura positiva:${snDetailPair('culturaPositiva')}</div>
+      </div>
+
+      <div class="row">
+        <div class="cell"><span class="label">Fisioterapia — Mobilização:</span>${snPair('mob')}</div>
+        <div class="cell">O2:${snDetailPair('fisioO2')}</div>
+        <div class="cell">Desmame de O2:${snDetailNaTriple('desmameO2')}</div>
+        <div class="cell">TRE:${snNaTriple('tre')}</div>
+      </div>
+
+      <div class="row">
+        <div class="cell xwide"><span class="label">Metas definidas na visita:</span><input type="text" data-field="metas1"></div>
+      </div>
+      <div class="row">
+        <div class="cell xwide r-cont"><input type="text" data-field="metas2"></div>
+      </div>
+
+      <div class="row">
+        <div class="cell xwide"><span class="label">Pendências:</span><input type="text" data-field="pendencias"></div>
       </div>
     </div>
     `;
   }
 
+  const categoriasAssinatura = [
+    { slug: 'medico', label: 'Médico Intensivista / Coordenador' },
+    { slug: 'enfermeiro', label: 'Enfermeiro(a)' },
+    { slug: 'fisioterapeuta', label: 'Fisioterapeuta' },
+    { slug: 'infectologista', label: 'Infectologista (CCIH)' },
+    { slug: 'hematologista', label: 'Hematologista' },
+    { slug: 'nutricionista', label: 'Nutricionista' },
+    { slug: 'farmaceutico', label: 'Farmacêutico(a)' },
+    { slug: 'psicologo', label: 'Psicólogo(a)' },
+    { slug: 'assistenteSocial', label: 'Assistente Social' },
+    { slug: 'fonoaudiologo', label: 'Fonoaudiólogo(a)' },
+    { slug: 'outro', label: 'Outro', editavel: true },
+  ];
+
+  function signRow(cat) {
+    return `
+      <div class="row">
+        <div class="cell" style="flex: 0 0 52mm;">
+          ${cat.editavel
+            ? `<span class="label">Outro:</span><input type="text" data-field="sig_outro_categoria" placeholder="categoria">`
+            : `<span class="label">${cat.label}</span>`}
+        </div>
+        <div class="cell wide"><input type="text" data-field="sig_${cat.slug}_nome"></div>
+        <div class="cell wide"><input type="text" data-field="sig_${cat.slug}_registro"></div>
+        <div class="cell xwide"><input type="text" data-field="sig_${cat.slug}_assinatura"></div>
+      </div>
+    `;
+  }
+
+  function signCardHtml() {
+    return `
+      <div class="sign-card" id="assinaturas-container">
+        <div class="sign-heading">ASSINATURAS DOS PROFISSIONAIS PRESENTES</div>
+        <div class="row header-strip">
+          <div class="cell" style="flex: 0 0 52mm;"><span class="label">Profissional / Categoria</span></div>
+          <div class="cell wide"><span class="label">Nome legível</span></div>
+          <div class="cell wide"><span class="label">Registro Profissional</span></div>
+          <div class="cell xwide"><span class="label">Assinatura</span></div>
+        </div>
+        ${categoriasAssinatura.map(signRow).join('')}
+      </div>
+    `;
+  }
+
   let html = '';
-  for (let i = 0; i < beds.length; i += 2) {
-    const pageNum = i / 2 + 1;
-    const totalPages = Math.ceil(beds.length / 2);
+  const BEDS_POR_PAGINA = 3;
+  const totalPages = Math.ceil(beds.length / BEDS_POR_PAGINA);
+  for (let i = 0; i < beds.length; i += BEDS_POR_PAGINA) {
+    const pageNum = i / BEDS_POR_PAGINA + 1;
+    const ultimaPagina = pageNum === totalPages;
+    const bedsDaPagina = beds.slice(i, i + BEDS_POR_PAGINA);
     html += `
       <div class="page">
         <div class="page-header">
           <div class="brand">HOSPITAL DO SANGUE</div>
           <div class="title">
-            <div class="t1">ISBAR | PASSAGEM DE PLANTÃO</div>
+            <div class="t1">CHECKLIST DE VISITA MULTIPROFISSIONAL</div>
             <div class="t2">UTI PEDIÁTRICA — HEMOAM</div>
           </div>
           ${pageNum === 1 ? `
           <div class="page-date">
-            <span class="label">Data:</span><input type="text" id="page-date" style="max-width:22mm">
+            <span class="label">Data:</span><input type="text" id="page-date" style="max-width:20mm">
+            <span class="freq">Frequência: 1x/semana — TERÇA</span>
+            <span class="label">Início:</span><input type="text" id="page-hora-inicio" style="max-width:12mm">
+            <span class="label">Término:</span><input type="text" id="page-hora-termino" style="max-width:12mm">
           </div>` : '<div class="page-date"></div>'}
           <div class="pageno">Página ${pageNum}/${totalPages}</div>
         </div>
         <div class="cards">
-          ${bedCard(beds[i])}
-          ${i + 1 < beds.length ? bedCard(beds[i + 1]) : ''}
+          ${bedsDaPagina.map(bedCard).join('')}
+          ${ultimaPagina ? signCardHtml() : ''}
         </div>
       </div>
     `;
@@ -510,18 +536,18 @@
     card.querySelectorAll('[data-detail-toggle]').forEach(atualizarDetalheVisibilidade);
   }
 
-  const AUTOSAVE_KEY = 'hemoam-isbar-utip-rascunho';
+  const AUTOSAVE_KEY = 'hemoam-checklist-visita-multi-rascunho';
 
-  function nomeArquivoPlantao(data) {
+  function nomeArquivoChecklist(data) {
     const dd = String(data.getDate()).padStart(2, '0');
     const mm = String(data.getMonth() + 1).padStart(2, '0');
     const aaaa = data.getFullYear();
-    return `plantão (${dd}-${mm}-${aaaa}).json`;
+    return `checklist-visita-multi (${dd}-${mm}-${aaaa}).json`;
   }
 
-  const FSA_DB_NAME = 'hemoam-isbar-fsa';
+  const FSA_DB_NAME = 'hemoam-checklist-fsa';
   const FSA_STORE_NAME = 'handles';
-  const FSA_HANDLE_KEY = 'plantao-arquivo';
+  const FSA_HANDLE_KEY = 'checklist-arquivo';
 
   function fsaAbrirDB() {
     return new Promise((resolve, reject) => {
@@ -626,8 +652,8 @@
     let handle;
     try {
       handle = await window.showSaveFilePicker({
-        suggestedName: nomeArquivoPlantao(new Date()),
-        types: [{ description: 'Dados ISBAR', accept: { 'application/json': ['.json'] } }]
+        suggestedName: nomeArquivoChecklist(new Date()),
+        types: [{ description: 'Dados Checklist Visita Multi', accept: { 'application/json': ['.json'] } }]
       });
     } catch (e) {
       return; // usuário cancelou o seletor nativo
@@ -675,10 +701,22 @@
       });
       beds[bed] = campos;
     });
+    const assinaturas = {};
+    const signContainer = document.getElementById('assinaturas-container');
+    if (signContainer) {
+      signContainer.querySelectorAll('[data-field]').forEach(el => {
+        assinaturas[el.dataset.field] = el.type === 'checkbox' ? el.checked : el.value;
+      });
+    }
     const pageDateEl = document.getElementById('page-date');
+    const horaInicioEl = document.getElementById('page-hora-inicio');
+    const horaTerminoEl = document.getElementById('page-hora-termino');
     return {
       pageDate: pageDateEl ? pageDateEl.value : '',
-      beds
+      horaInicio: horaInicioEl ? horaInicioEl.value : '',
+      horaTermino: horaTerminoEl ? horaTerminoEl.value : '',
+      beds,
+      assinaturas
     };
   }
 
@@ -686,6 +724,10 @@
     if (!dados || typeof dados !== 'object') return;
     const pageDateEl = document.getElementById('page-date');
     if (pageDateEl && typeof dados.pageDate === 'string') pageDateEl.value = dados.pageDate;
+    const horaInicioEl = document.getElementById('page-hora-inicio');
+    if (horaInicioEl && typeof dados.horaInicio === 'string') horaInicioEl.value = dados.horaInicio;
+    const horaTerminoEl = document.getElementById('page-hora-termino');
+    if (horaTerminoEl && typeof dados.horaTermino === 'string') horaTerminoEl.value = dados.horaTermino;
     if (dados.beds) {
       document.querySelectorAll('.bed-card').forEach(card => {
         const bed = card.dataset.bed;
@@ -698,6 +740,17 @@
           else el.value = valor;
         });
       });
+    }
+    if (dados.assinaturas) {
+      const signContainer = document.getElementById('assinaturas-container');
+      if (signContainer) {
+        signContainer.querySelectorAll('[data-field]').forEach(el => {
+          if (!(el.dataset.field in dados.assinaturas)) return;
+          const valor = dados.assinaturas[el.dataset.field];
+          if (el.type === 'checkbox') el.checked = !!valor;
+          else el.value = valor;
+        });
+      }
     }
     sincronizarDetalhes();
   }
@@ -760,7 +813,7 @@
     const dados = coletarEstado();
     const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const nomeArquivo = nomeArquivoPlantao(new Date());
+    const nomeArquivo = nomeArquivoChecklist(new Date());
     const a = document.createElement('a');
     a.href = url;
     a.download = nomeArquivo;
@@ -905,9 +958,251 @@
     return true;
   }
 
+  // --- Vínculo de leitura com o arquivo compartilhado do ISBAR (não escreve nele) ---
+
+  const ISBAR_FONTE_DB_NAME = 'hemoam-checklist-isbar-fonte';
+  const ISBAR_FONTE_STORE_NAME = 'handles';
+  const ISBAR_FONTE_HANDLE_KEY = 'isbar-fonte-arquivo';
+  const ISBAR_FONTE_SUPORTADO = 'showOpenFilePicker' in window;
+
+  const ISBAR_PARA_CHECKLIST = {
+    nome: 'paciente',
+    idadeDN: 'dn',
+    diagnosticos: 'diagnosticos',
+    disp_cvc: 'disp_cvc',
+    disp_tot: 'disp_tot',
+    disp_svd: 'disp_svd',
+    disp_sne: 'disp_sne',
+    disp_sng: 'disp_sng',
+    disp_shiley: 'disp_shiley',
+    disp_tenkhoff: 'disp_tenkhoff',
+    disp_outro: 'disp_outro',
+    disp_outro_val: 'disp_outro_val',
+  };
+
+  let isbarFonteHandleAtual = null;
+  let isbarFonteVinculado = false;
+  let isbarFonteRetomadaEmAndamento = false;
+
+  function isbarFonteAbrirDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(ISBAR_FONTE_DB_NAME, 1);
+      req.onupgradeneeded = () => {
+        req.result.createObjectStore(ISBAR_FONTE_STORE_NAME);
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function isbarFonteSalvarHandle(handle) {
+    const db = await isbarFonteAbrirDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(ISBAR_FONTE_STORE_NAME, 'readwrite');
+      tx.objectStore(ISBAR_FONTE_STORE_NAME).put(handle, ISBAR_FONTE_HANDLE_KEY);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  async function isbarFonteCarregarHandle() {
+    const db = await isbarFonteAbrirDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(ISBAR_FONTE_STORE_NAME, 'readonly');
+      const req = tx.objectStore(ISBAR_FONTE_STORE_NAME).get(ISBAR_FONTE_HANDLE_KEY);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function isbarFonteRemoverHandle() {
+    const db = await isbarFonteAbrirDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(ISBAR_FONTE_STORE_NAME, 'readwrite');
+      tx.objectStore(ISBAR_FONTE_STORE_NAME).delete(ISBAR_FONTE_HANDLE_KEY);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  function isbarFonteMostrarStatus(mensagem) {
+    const el = document.getElementById('isbar-fonte-status');
+    el.textContent = mensagem;
+    el.style.display = mensagem ? '' : 'none';
+  }
+
+  function isbarFonteMostrarErro(mensagem) {
+    const el = document.getElementById('isbar-fonte-erro');
+    el.textContent = mensagem;
+    el.style.display = mensagem ? '' : 'none';
+  }
+
+  function isbarFonteAtualizarBotoes({ mostrarVincular = false, mostrarRetomar = false, mostrarAcoes = false } = {}) {
+    document.getElementById('isbar-fonte-vincular-btn').style.display = mostrarVincular ? '' : 'none';
+    document.getElementById('isbar-fonte-retomar-btn').style.display = mostrarRetomar ? '' : 'none';
+    document.getElementById('isbar-fonte-atualizar-btn').style.display = mostrarAcoes ? '' : 'none';
+    document.getElementById('isbar-fonte-desvincular-btn').style.display = mostrarAcoes ? '' : 'none';
+  }
+
+  async function isbarFonteLerArquivo(handle) {
+    const file = await handle.getFile();
+    const texto = await file.text();
+    if (!texto.trim()) return null;
+    return JSON.parse(texto);
+  }
+
+  function isbarFonteAplicarDados(dadosIsbar) {
+    if (!dadosIsbar || !dadosIsbar.beds) return;
+    document.querySelectorAll('.bed-card[data-bed]').forEach(card => {
+      const bed = card.dataset.bed;
+      const origem = dadosIsbar.beds[bed];
+      if (!origem) return;
+      Object.entries(ISBAR_PARA_CHECKLIST).forEach(([campoIsbar, campoChecklist]) => {
+        if (!(campoIsbar in origem)) return;
+        const el = card.querySelector(`[data-field="${campoChecklist}"]`);
+        if (!el) return;
+        const valor = origem[campoIsbar];
+        if (el.type === 'checkbox') el.checked = !!valor;
+        else el.value = valor;
+      });
+    });
+    sincronizarDetalhes();
+    salvarEstadoTudo();
+  }
+
+  async function isbarFonteAtualizarAgora() {
+    if (!isbarFonteHandleAtual) return;
+    try {
+      const dados = await isbarFonteLerArquivo(isbarFonteHandleAtual);
+      if (dados) isbarFonteAplicarDados(dados);
+      isbarFonteMostrarErro('');
+    } catch (e) {
+      isbarFonteMostrarErro('Não foi possível ler o arquivo do ISBAR — os dados sincronizados continuam os últimos lidos com sucesso.');
+    }
+  }
+
+  document.getElementById('isbar-fonte-vincular-btn').addEventListener('click', async () => {
+    let handles;
+    try {
+      handles = await window.showOpenFilePicker({
+        types: [{ description: 'Dados ISBAR', accept: { 'application/json': ['.json'] } }]
+      });
+    } catch (e) {
+      return; // usuário cancelou o seletor nativo
+    }
+    const handle = handles[0];
+    isbarFonteHandleAtual = handle;
+    isbarFonteVinculado = true;
+    isbarFonteMostrarErro('');
+    isbarFonteMostrarStatus(`Dados do ISBAR vinculados (${handle.name})`);
+    isbarFonteAtualizarBotoes({ mostrarAcoes: true });
+    await isbarFonteAtualizarAgora();
+    try {
+      await isbarFonteSalvarHandle(handle);
+    } catch (e) {
+      console.warn('Não foi possível salvar a referência do arquivo do ISBAR para retomada automática:', e);
+    }
+  });
+
+  document.getElementById('isbar-fonte-atualizar-btn').addEventListener('click', () => {
+    isbarFonteAtualizarAgora();
+  });
+
+  document.getElementById('isbar-fonte-desvincular-btn').addEventListener('click', () => {
+    isbarFonteHandleAtual = null;
+    isbarFonteVinculado = false;
+    isbarFonteMostrarStatus('');
+    isbarFonteMostrarErro('');
+    isbarFonteRemoverHandle().catch(() => {});
+    isbarFonteAtualizarBotoes({ mostrarVincular: true });
+  });
+
+  async function isbarFonteRetomarComPermissao() {
+    if (isbarFonteRetomadaEmAndamento) return;
+    const handle = isbarFonteHandleAtual;
+    if (!handle || isbarFonteVinculado) return;
+    isbarFonteRetomadaEmAndamento = true;
+    try {
+      let permissao;
+      try {
+        permissao = await handle.requestPermission({ mode: 'read' });
+      } catch (e) {
+        permissao = 'denied';
+      }
+      if (permissao !== 'granted') {
+        isbarFonteAtualizarBotoes({ mostrarRetomar: true });
+        return;
+      }
+      isbarFonteVinculado = true;
+      isbarFonteMostrarStatus(`Dados do ISBAR vinculados (${handle.name})`);
+      isbarFonteAtualizarBotoes({ mostrarAcoes: true });
+      await isbarFonteAtualizarAgora();
+    } finally {
+      isbarFonteRetomadaEmAndamento = false;
+    }
+  }
+
+  function isbarFonteAgendarRetomadaViaGesto() {
+    const tentar = () => {
+      document.removeEventListener('pointerdown', tentar, true);
+      document.removeEventListener('keydown', tentar, true);
+      isbarFonteRetomarComPermissao();
+    };
+    document.addEventListener('pointerdown', tentar, true);
+    document.addEventListener('keydown', tentar, true);
+  }
+
+  document.getElementById('isbar-fonte-retomar-btn').addEventListener('click', () => {
+    isbarFonteRetomarComPermissao();
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && isbarFonteVinculado) {
+      isbarFonteAtualizarAgora();
+    }
+  });
+
+  async function isbarFonteTentarRetomarAutomatico() {
+    if (!ISBAR_FONTE_SUPORTADO) return;
+    let handle;
+    try {
+      handle = await isbarFonteCarregarHandle();
+    } catch (e) {
+      isbarFonteAtualizarBotoes({ mostrarVincular: true });
+      return;
+    }
+    if (!handle) {
+      isbarFonteAtualizarBotoes({ mostrarVincular: true });
+      return;
+    }
+
+    let permissao;
+    try {
+      permissao = await handle.queryPermission({ mode: 'read' });
+    } catch (e) {
+      await isbarFonteRemoverHandle().catch(() => {});
+      isbarFonteAtualizarBotoes({ mostrarVincular: true });
+      return;
+    }
+
+    if (permissao === 'granted') {
+      isbarFonteHandleAtual = handle;
+      isbarFonteVinculado = true;
+      isbarFonteMostrarStatus(`Dados do ISBAR vinculados (${handle.name})`);
+      isbarFonteAtualizarBotoes({ mostrarAcoes: true });
+      await isbarFonteAtualizarAgora();
+      return;
+    }
+
+    isbarFonteHandleAtual = handle;
+    isbarFonteAtualizarBotoes({ mostrarRetomar: true });
+    isbarFonteAgendarRetomadaViaGesto();
+  }
+
   (async () => {
     restaurarEstadoLocal();
     await fsaTentarRetomarAutomatico();
+    await isbarFonteTentarRetomarAutomatico();
     if (preencherDataPadrao()) salvarEstadoTudo();
   })();
 </script>
