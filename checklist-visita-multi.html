@@ -241,6 +241,11 @@
     flex: 0 1 auto;
   }
 
+  .cell.wrap-detalhes {
+    flex-wrap: wrap;
+    row-gap: 0.8mm;
+  }
+
   .header-strip {
     background: var(--header-bg);
     color: #fff;
@@ -382,31 +387,27 @@
       </div>
 
       <div class="row">
-        <div class="cell xwide">
+        <div class="cell xwide wrap-detalhes">
           <span class="label">Dispositivos:</span>
-          <label class="chk"><input type="checkbox" data-field="disp_cvc"> CVC</label>
-          <label class="chk"><input type="checkbox" data-field="disp_tot"> TOT</label>
-          <label class="chk"><input type="checkbox" data-field="disp_svd"> SVD</label>
-          <label class="chk"><input type="checkbox" data-field="disp_sne"> SNE</label>
-          <label class="chk"><input type="checkbox" data-field="disp_sng"> SNG</label>
-          <label class="chk"><input type="checkbox" data-field="disp_shiley"> Shiley</label>
-          <label class="chk"><input type="checkbox" data-field="disp_tenkhoff"> Tenkhoff</label>
+          <label class="chk"><input type="checkbox" data-field="disp_cvc" data-detail-toggle="disp_cvc"> CVC</label>
+          <input type="text" data-field="disp_cvc_insercao" data-detail-input="disp_cvc" class="insercao-input" style="display:none" placeholder="data/local inserção">
+          <label class="chk"><input type="checkbox" data-field="disp_tot" data-detail-toggle="disp_tot"> TOT</label>
+          <input type="text" data-field="disp_tot_insercao" data-detail-input="disp_tot" class="insercao-input" style="display:none" placeholder="data/local inserção">
+          <label class="chk"><input type="checkbox" data-field="disp_svd" data-detail-toggle="disp_svd"> SVD</label>
+          <input type="text" data-field="disp_svd_insercao" data-detail-input="disp_svd" class="insercao-input" style="display:none" placeholder="data/local inserção">
+          <label class="chk"><input type="checkbox" data-field="disp_sne" data-detail-toggle="disp_sne"> SNE</label>
+          <input type="text" data-field="disp_sne_insercao" data-detail-input="disp_sne" class="insercao-input" style="display:none" placeholder="data/local inserção">
+          <label class="chk"><input type="checkbox" data-field="disp_sng" data-detail-toggle="disp_sng"> SNG</label>
+          <input type="text" data-field="disp_sng_insercao" data-detail-input="disp_sng" class="insercao-input" style="display:none" placeholder="data/local inserção">
+          <label class="chk"><input type="checkbox" data-field="disp_shiley" data-detail-toggle="disp_shiley"> Shiley</label>
+          <input type="text" data-field="disp_shiley_insercao" data-detail-input="disp_shiley" class="insercao-input" style="display:none" placeholder="data/local inserção">
+          <label class="chk"><input type="checkbox" data-field="disp_tenkhoff" data-detail-toggle="disp_tenkhoff"> Tenkhoff</label>
+          <input type="text" data-field="disp_tenkhoff_insercao" data-detail-input="disp_tenkhoff" class="insercao-input" style="display:none" placeholder="data/local inserção">
           <label class="chk"><input type="checkbox" data-field="disp_nenhum"> Nenhum</label>
           <label class="chk"><input type="checkbox" data-field="disp_outro"> Outro:</label>
           <input type="text" data-field="disp_outro_val" style="max-width:16mm">
         </div>
         <div class="cell wide">Avaliados hoje p/ retirada:${snPair('avaliadosRetirada')}</div>
-      </div>
-
-      <div class="row">
-        <div class="cell xwide">
-          <span class="label">Data/local de inserção:</span>
-          CVC:<input type="text" data-field="disp_cvc_insercao" class="insercao-input">
-          TOT:<input type="text" data-field="disp_tot_insercao" class="insercao-input">
-          SVD:<input type="text" data-field="disp_svd_insercao" class="insercao-input">
-          Shiley:<input type="text" data-field="disp_shiley_insercao" class="insercao-input">
-        </div>
-        <div class="cell wide"></div>
       </div>
 
       <div class="row">
@@ -1001,12 +1002,14 @@
 
   function preencherDataPadrao() {
     const el = document.getElementById('page-date');
-    if (!el || el.value) return false;
+    if (!el) return false;
     const hoje = new Date();
     const dd = String(hoje.getDate()).padStart(2, '0');
     const mm = String(hoje.getMonth() + 1).padStart(2, '0');
     const aaaa = hoje.getFullYear();
-    el.value = `${dd}/${mm}/${aaaa}`;
+    const dataHoje = `${dd}/${mm}/${aaaa}`;
+    if (el.value === dataHoje) return false;
+    el.value = dataHoje;
     return true;
   }
 
