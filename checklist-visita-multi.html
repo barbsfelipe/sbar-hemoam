@@ -232,6 +232,14 @@
     max-width: 20mm;
     flex: 0 1 auto;
   }
+  .detail-input-wide {
+    max-width: 40mm;
+  }
+
+  .insercao-input {
+    max-width: 26mm;
+    flex: 0 1 auto;
+  }
 
   .header-strip {
     background: var(--header-bg);
@@ -340,6 +348,14 @@
     `;
   }
 
+  function snDetailPairWide(field) {
+    return `
+      <label class="chk"><input type="checkbox" data-field="${field}_sim" data-detail-toggle="${field}"> S</label>
+      <input type="text" data-field="${field}_detalhe" data-detail-input="${field}" class="detail-input detail-input-wide" style="display:none">
+      <label class="chk"><input type="checkbox" data-field="${field}_nao"> N</label>
+    `;
+  }
+
   function snDetailNaTriple(field) {
     return `
       <label class="chk"><input type="checkbox" data-field="${field}_sim" data-detail-toggle="${field}"> S</label>
@@ -383,6 +399,17 @@
       </div>
 
       <div class="row">
+        <div class="cell xwide">
+          <span class="label">Data/local de inserção:</span>
+          CVC:<input type="text" data-field="disp_cvc_insercao" class="insercao-input">
+          TOT:<input type="text" data-field="disp_tot_insercao" class="insercao-input">
+          SVD:<input type="text" data-field="disp_svd_insercao" class="insercao-input">
+          Shiley:<input type="text" data-field="disp_shiley_insercao" class="insercao-input">
+        </div>
+        <div class="cell wide"></div>
+      </div>
+
+      <div class="row">
         <div class="cell wide">
           <span class="label">Dieta/Nutrição:</span>
           <label class="chk"><input type="checkbox" data-field="dieta_vo"> VO</label>
@@ -397,7 +424,32 @@
           <label class="chk"><input type="checkbox" data-field="aceitacao_parcial"> Parcial</label>
           <label class="chk"><input type="checkbox" data-field="aceitacao_ruim"> Ruim</label>
         </div>
-        <div class="cell">Fono:${snDetailNaTriple('fono')}</div>
+      </div>
+
+      <div class="row">
+        <div class="cell"><span class="label">Fonoaudiologia — Disfagia:</span>${snPair('fonoDisfagia')}</div>
+        <div class="cell">Risco de broncoaspiração:${snPair('fonoBroncoaspiracao')}</div>
+        <div class="cell">Deglutição com manobras:${snPair('fonoDegluticao')}</div>
+      </div>
+
+      <div class="row">
+        <div class="cell">
+          <span class="label">Psicologia:</span>
+          <label class="chk"><input type="checkbox" data-field="psico_avaliado"> Avaliado</label>
+          <label class="chk"><input type="checkbox" data-field="psico_nao"> Não</label>
+        </div>
+        <div class="cell wide"><span class="label">Quadro emoc. paciente:</span><input type="text" data-field="psicoQuadroPaciente"></div>
+        <div class="cell wide"><span class="label">Quadro emoc. acompanhante:</span><input type="text" data-field="psicoQuadroAcompanhante"></div>
+      </div>
+
+      <div class="row">
+        <div class="cell">
+          <span class="label">Serviço Social:</span>
+          <label class="chk"><input type="checkbox" data-field="ss_avaliado"> Avaliado</label>
+          <label class="chk"><input type="checkbox" data-field="ss_nao"> Não</label>
+        </div>
+        <div class="cell wide"><span class="label">Situação familiar/vínculo:</span><input type="text" data-field="ssSituacaoFamiliar"></div>
+        <div class="cell wide"><span class="label">Pendência social:</span><input type="text" data-field="ssPendenciaSocial"></div>
       </div>
 
       <div class="row">
@@ -423,7 +475,7 @@
           <label class="chk"><input type="checkbox" data-field="atb_nenhum"> Nenhum</label>
         </div>
         <div class="cell">Descalonamento?${snNaTriple('descalonamento')}</div>
-        <div class="cell">Cultura positiva:${snDetailPair('culturaPositiva')}</div>
+        <div class="cell wide">Cultura positiva:${snDetailPairWide('culturaPositiva')}</div>
       </div>
 
       <div class="row">
@@ -492,7 +544,7 @@
   }
 
   let html = '';
-  const BEDS_POR_PAGINA = 3;
+  const BEDS_POR_PAGINA = 2;
   const totalPages = Math.ceil(beds.length / BEDS_POR_PAGINA);
   for (let i = 0; i < beds.length; i += BEDS_POR_PAGINA) {
     const pageNum = i / BEDS_POR_PAGINA + 1;
