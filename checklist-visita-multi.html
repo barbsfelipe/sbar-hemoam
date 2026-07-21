@@ -471,7 +471,7 @@
       </div>
 
       <div class="row">
-        <div class="cell wide">
+        <div class="cell xwide">
           <span class="label">ATB em uso:</span><input type="text" data-field="atbUso">
           <label class="chk"><input type="checkbox" data-field="atb_nenhum"> Nenhum</label>
         </div>
@@ -546,10 +546,9 @@
 
   let html = '';
   const BEDS_POR_PAGINA = 2;
-  const totalPages = Math.ceil(beds.length / BEDS_POR_PAGINA);
+  const totalPages = Math.ceil(beds.length / BEDS_POR_PAGINA) + 1;
   for (let i = 0; i < beds.length; i += BEDS_POR_PAGINA) {
     const pageNum = i / BEDS_POR_PAGINA + 1;
-    const ultimaPagina = pageNum === totalPages;
     const bedsDaPagina = beds.slice(i, i + BEDS_POR_PAGINA);
     html += `
       <div class="page">
@@ -570,11 +569,26 @@
         </div>
         <div class="cards">
           ${bedsDaPagina.map(bedCard).join('')}
-          ${ultimaPagina ? signCardHtml() : ''}
         </div>
       </div>
     `;
   }
+  html += `
+    <div class="page">
+      <div class="page-header">
+        <div class="brand">HOSPITAL DO SANGUE</div>
+        <div class="title">
+          <div class="t1">CHECKLIST DE VISITA MULTIPROFISSIONAL</div>
+          <div class="t2">UTI PEDIÁTRICA — HEMOAM</div>
+        </div>
+        <div class="page-date"></div>
+        <div class="pageno">Página ${totalPages}/${totalPages}</div>
+      </div>
+      <div class="cards">
+        ${signCardHtml()}
+      </div>
+    </div>
+  `;
   document.getElementById('app').innerHTML = html;
 
   document.getElementById('print-btn').addEventListener('click', () => window.print());
