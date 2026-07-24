@@ -558,10 +558,28 @@
 
   document.getElementById('toggle-vazios-btn').addEventListener('click', () => {
     ocultarVaziosAtivo = !ocultarVaziosAtivo;
+    salvarPreferenciaOcultarVazios();
     atualizarVisibilidadeLeitosVazios();
   });
 
   const AUTOSAVE_KEY = 'hemoam-isbar-utip-rascunho';
+
+  const OCULTAR_VAZIOS_KEY = 'hemoam-isbar-ocultar-vazios';
+
+  function salvarPreferenciaOcultarVazios() {
+    try {
+      localStorage.setItem(OCULTAR_VAZIOS_KEY, ocultarVaziosAtivo ? '1' : '0');
+    } catch (e) { /* localStorage indisponível ou cheio: ignora */ }
+  }
+
+  function restaurarPreferenciaOcultarVazios() {
+    try {
+      ocultarVaziosAtivo = localStorage.getItem(OCULTAR_VAZIOS_KEY) === '1';
+    } catch (e) { ocultarVaziosAtivo = false; }
+  }
+
+  restaurarPreferenciaOcultarVazios();
+  atualizarVisibilidadeLeitosVazios();
 
   function nomeArquivoPlantao(data) {
     const dd = String(data.getDate()).padStart(2, '0');
