@@ -578,9 +578,6 @@
     } catch (e) { ocultarVaziosAtivo = false; }
   }
 
-  restaurarPreferenciaOcultarVazios();
-  atualizarVisibilidadeLeitosVazios();
-
   function nomeArquivoPlantao(data) {
     const dd = String(data.getDate()).padStart(2, '0');
     const mm = String(data.getMonth() + 1).padStart(2, '0');
@@ -769,6 +766,7 @@
       });
     }
     sincronizarDetalhes();
+    atualizarVisibilidadeLeitosVazios();
   }
 
   function sincronizarDetalhes() {
@@ -818,12 +816,15 @@
     const bed = clearBtn.dataset.clearBed;
     if (confirm(`Limpar todos os dados do leito ${bed}? Essa ação não pode ser desfeita.`)) {
       limparLeito(bed);
+      atualizarVisibilidadeLeitosVazios();
       salvarEstadoTudo();
     }
   });
 
   document.addEventListener('input', salvarEstadoLocalDebounced);
+  document.addEventListener('input', atualizarVisibilidadeLeitosVazios);
   document.addEventListener('change', salvarEstadoLocalDebounced);
+  document.addEventListener('change', atualizarVisibilidadeLeitosVazios);
 
   document.getElementById('save-btn').addEventListener('click', () => {
     const dados = coletarEstado();
@@ -975,9 +976,11 @@
   }
 
   (async () => {
+    restaurarPreferenciaOcultarVazios();
     restaurarEstadoLocal();
     await fsaTentarRetomarAutomatico();
     if (preencherDataPadrao()) salvarEstadoTudo();
+    atualizarVisibilidadeLeitosVazios();
   })();
 </script>
 </body>
