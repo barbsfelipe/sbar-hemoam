@@ -50,6 +50,31 @@ Função nova `leitoEstaVazio(card)`, reaproveitando o mesmo seletor
 `card.querySelectorAll('[data-field]')` já usado em `limparLeito` e
 `coletarEstado`.
 
+## Cada página impressa tem 2 leitos
+
+O HTML gerado não tem uma página por leito: cada `.page` (a unidade que
+recebe `break-after: page` na impressão) contém **dois** `.bed-card`
+(leitos `beds[i]` e `beds[i+1]`, ver loop `for (let i = 0; i < beds.length; i += 2)`).
+Com 8 leitos, isso dá 4 páginas de 2 leitos cada. Consequências para a
+ocultação:
+
+- Esconder um `.bed-card` sozinho (quando só um dos dois leitos da
+  página está vazio) é suficiente — o outro `.bed-card` tem `flex: 1`
+  dentro de `.cards` (`display: flex; flex-direction: column`) e ocupa a
+  página inteira sozinho.
+- Quando **os dois** leitos de uma mesma página ficam vazios, a página
+  inteira precisa ser ocultada também — senão sobra uma folha impressa em
+  branco (só com o cabeçalho `page-header`). A função de atualização de
+  visibilidade precisa checar, para cada `.page`, se todos os seus
+  `.bed-card` estão ocultos e, nesse caso, ocultar o `.page` também.
+- Cada `.page` mostra `Página X/Y` (`.pageno`, calculado uma vez na
+  geração inicial do HTML). Se uma página do meio for ocultada por
+  inteiro, esse texto precisa ser recalculado com base nas páginas
+  **visíveis no momento**, para não imprimir algo como `Página 1/4`
+  seguido de `Página 3/4` (sugerindo página faltando). A função de
+  atualização de visibilidade renumera as `.page` visíveis, em ordem, como
+  `Página <posição>/<total de páginas visíveis>`.
+
 ## Mecanismo
 
 ### Botão na toolbar
@@ -72,10 +97,22 @@ imprimir) — precisa esconder nos dois casos.
 
 Função nova `atualizarVisibilidadeLeitosVazios()`:
 
-1. Para cada `.bed-card`, calcula `leitoEstaVazio(card)`.
-2. Se o filtro estiver ligado e o leito for vazio, adiciona
-   `bed-hidden`; senão remove.
-3. Atualiza o texto do botão com a contagem atual de leitos ocultos.
+1. Para cada `.bed-card`, calcula `leitoEstaVazio(card)`. Se o filtro
+   estiver ligado e o leito for vazio, adiciona `bed-hidden`; senão
+   remove.
+2. Para cada `.page`, verifica se todos os `.bed-card` dentro dela têm
+   `bed-hidden` (ver seção "Cada página impressa tem 2 leitos" acima).
+   Se sim, adiciona `bed-hidden` também no `.page`; senão remove.
+   **Exceção:** a primeira página (a que contém `#page-date`, o campo de
+   data do plantão) nunca recebe `bed-hidden` por inteiro, mesmo que os
+   dois leitos dela estejam vazios — assim o campo de data continua
+   sempre acessível. Os leitos vazios dentro dela continuam sendo
+   ocultados individualmente (passo 1); só a página em si não some.
+3. Renumera o `.pageno` de cada `.page` que **não** está com
+   `bed-hidden`, em ordem, como `Página <posição>/<total de páginas
+   visíveis>` (substituindo o número estático calculado na geração
+   inicial do HTML).
+4. Atualiza o texto do botão com a contagem atual de leitos ocultos.
 
 Chamada nos seguintes pontos:
 
@@ -122,11 +159,21 @@ Validar manualmente (Chrome, via Playwright ou navegador):
 4. Com o filtro ligado, usar "Carregar dados (.json)" apontando para um
    arquivo com dados em leitos que hoje estão vazios/ocultos → confirmar
    que esses leitos reaparecem automaticamente após a restauração.
-5. Com o filtro ligado e ao menos um leito oculto, clicar em
-   "Imprimir / Salvar PDF" (ou `window.print()` via preview) → confirmar
-   que o leito oculto não gera página na pré-visualização de impressão.
-6. Recarregar a página com o filtro ligado → confirmar que ele continua
+5. Com o filtro ligado e ao menos um leito oculto (mas não os dois de
+   uma mesma página), clicar em "Imprimir / Salvar PDF" (ou
+   `window.print()` via preview) → confirmar que a página correspondente
+   ainda é impressa, só que com o leito visível ocupando a folha
+   inteira.
+6. Deixar os dois leitos de uma mesma página (ex.: 411 e 412) vazios com
+   o filtro ligado → confirmar que essa página some inteira da
+   pré-visualização de impressão, e que a numeração `Página X/Y` das
+   páginas restantes fica contígua (sem pular número).
+7. Deixar os dois leitos da primeira página (409 e 410) vazios com o
+   filtro ligado → confirmar que a primeira página **continua**
+   aparecendo (com o campo de data visível), mesmo sem nenhum leito
+   preenchido nela.
+8. Recarregar a página com o filtro ligado → confirmar que ele continua
    ligado (preferência persistida) e que a contagem exibida bate com os
    leitos realmente vazios no momento da carga.
-7. Desligar o filtro → todos os 8 leitos voltam a aparecer, inclusive os
-   vazios.
+9. Desligar o filtro → todos os 8 leitos e as 4 páginas voltam a
+   aparecer, inclusive os vazios, com a numeração original `Página X/4`.
