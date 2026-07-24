@@ -513,6 +513,38 @@
     card.querySelectorAll('[data-detail-toggle]').forEach(atualizarDetalheVisibilidade);
   }
 
+  let ocultarVaziosAtivo = false;
+
+  function leitoEstaVazio(card) {
+    let vazio = true;
+    card.querySelectorAll('[data-field]').forEach(el => {
+      if (el.type === 'checkbox') {
+        if (el.checked) vazio = false;
+      } else if (el.value.trim() !== '') {
+        vazio = false;
+      }
+    });
+    return vazio;
+  }
+
+  function atualizarVisibilidadeLeitosVazios() {
+    let ocultos = 0;
+    document.querySelectorAll('.bed-card').forEach(card => {
+      const oculta = ocultarVaziosAtivo && leitoEstaVazio(card);
+      card.classList.toggle('bed-hidden', oculta);
+      if (oculta) ocultos++;
+    });
+    const btn = document.getElementById('toggle-vazios-btn');
+    btn.textContent = ocultarVaziosAtivo
+      ? `Mostrar leitos vazios (${ocultos} ocultos)`
+      : 'Ocultar leitos vazios';
+  }
+
+  document.getElementById('toggle-vazios-btn').addEventListener('click', () => {
+    ocultarVaziosAtivo = !ocultarVaziosAtivo;
+    atualizarVisibilidadeLeitosVazios();
+  });
+
   const AUTOSAVE_KEY = 'hemoam-isbar-utip-rascunho';
 
   function nomeArquivoPlantao(data) {
