@@ -534,6 +534,22 @@
       card.classList.toggle('bed-hidden', oculta);
       if (oculta) ocultos++;
     });
+
+    const paginasVisiveis = [];
+    document.querySelectorAll('.page').forEach(page => {
+      const temDataPlantao = !!page.querySelector('#page-date');
+      const cards = page.querySelectorAll('.bed-card');
+      const todosOcultos = cards.length > 0 &&
+        Array.from(cards).every(card => card.classList.contains('bed-hidden'));
+      const oculta = todosOcultos && !temDataPlantao;
+      page.classList.toggle('bed-hidden', oculta);
+      if (!oculta) paginasVisiveis.push(page);
+    });
+    paginasVisiveis.forEach((page, indice) => {
+      const pagenoEl = page.querySelector('.pageno');
+      if (pagenoEl) pagenoEl.textContent = `Página ${indice + 1}/${paginasVisiveis.length}`;
+    });
+
     const btn = document.getElementById('toggle-vazios-btn');
     btn.textContent = ocultarVaziosAtivo
       ? `Mostrar leitos vazios (${ocultos} ocultos)`
