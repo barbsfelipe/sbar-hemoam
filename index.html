@@ -232,6 +232,14 @@
     max-width: none;
     flex: 1 1 auto;
   }
+  .insercao-input {
+    max-width: 26mm;
+    flex: 0 1 auto;
+  }
+  .cell.wrap-detalhes {
+    flex-wrap: wrap;
+    row-gap: 0.8mm;
+  }
 
   .header-strip {
     background: var(--header-bg);
@@ -385,17 +393,22 @@
 
       <div class="row alert-row">
         <div class="cell"><span class="label">Alergias:</span>${chkPair('alergias')}</div>
-        <div class="cell xwide">
+        <div class="cell xwide wrap-detalhes">
           <span class="label">Dispositivos:</span>
-          <label class="chk"><input type="checkbox" data-field="disp_cvc"> CVC</label>
-          <input type="text" data-field="disp_cvc_val" style="max-width:10mm">
-          <label class="chk"><input type="checkbox" data-field="disp_tot"> TOT</label>
-          <input type="text" data-field="disp_tot_val" style="max-width:10mm">
-          <label class="chk"><input type="checkbox" data-field="disp_svd"> SVD</label>
-          <label class="chk"><input type="checkbox" data-field="disp_sne"> SNE</label>
-          <label class="chk"><input type="checkbox" data-field="disp_sng"> SNG</label>
-          <label class="chk"><input type="checkbox" data-field="disp_shiley"> Shiley</label>
-          <label class="chk"><input type="checkbox" data-field="disp_tenkhoff"> Tenkhoff</label>
+          <label class="chk"><input type="checkbox" data-field="disp_cvc" data-detail-toggle="disp_cvc"> CVC</label>
+          <input type="text" data-field="disp_cvc_val" data-detail-input="disp_cvc" class="insercao-input" style="display:none">
+          <label class="chk"><input type="checkbox" data-field="disp_tot" data-detail-toggle="disp_tot"> TOT</label>
+          <input type="text" data-field="disp_tot_val" data-detail-input="disp_tot" class="insercao-input" style="display:none">
+          <label class="chk"><input type="checkbox" data-field="disp_svd" data-detail-toggle="disp_svd"> SVD</label>
+          <input type="text" data-field="disp_svd_val" data-detail-input="disp_svd" class="insercao-input" style="display:none">
+          <label class="chk"><input type="checkbox" data-field="disp_sne" data-detail-toggle="disp_sne"> SNE</label>
+          <input type="text" data-field="disp_sne_val" data-detail-input="disp_sne" class="insercao-input" style="display:none">
+          <label class="chk"><input type="checkbox" data-field="disp_sng" data-detail-toggle="disp_sng"> SNG</label>
+          <input type="text" data-field="disp_sng_val" data-detail-input="disp_sng" class="insercao-input" style="display:none">
+          <label class="chk"><input type="checkbox" data-field="disp_shiley" data-detail-toggle="disp_shiley"> Shiley</label>
+          <input type="text" data-field="disp_shiley_val" data-detail-input="disp_shiley" class="insercao-input" style="display:none">
+          <label class="chk"><input type="checkbox" data-field="disp_tenkhoff" data-detail-toggle="disp_tenkhoff"> Tenkhoff</label>
+          <input type="text" data-field="disp_tenkhoff_val" data-detail-input="disp_tenkhoff" class="insercao-input" style="display:none">
           <label class="chk"><input type="checkbox" data-field="disp_outro"> Outro:</label>
           <input type="text" data-field="disp_outro_val" style="max-width:16mm">
         </div>
