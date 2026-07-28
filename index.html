@@ -228,6 +228,10 @@
     max-width: 20mm;
     flex: 0 1 auto;
   }
+  .detail-input-wide {
+    max-width: none;
+    flex: 1 1 auto;
+  }
 
   .header-strip {
     background: var(--header-bg);
@@ -355,11 +359,12 @@
 <script>
   const beds = [409, 410, 411, 412, 413, 414, 415, 416];
 
-  function chkPair(field) {
+  function chkPair(field, detailClass) {
+    const classe = detailClass ? `detail-input ${detailClass}` : 'detail-input';
     return `
       <label class="chk"><input type="checkbox" data-field="${field}_nao"> N</label>
       <label class="chk"><input type="checkbox" data-field="${field}_sim" data-detail-toggle="${field}"> S</label>
-      <input type="text" data-field="${field}_detalhe" data-detail-input="${field}" class="detail-input" style="display:none">
+      <input type="text" data-field="${field}_detalhe" data-detail-input="${field}" class="${classe}" style="display:none">
     `;
   }
 
@@ -401,18 +406,18 @@
       </div>
 
       <div class="row">
-        <div class="cell"><span class="label section">B</span>Antibióticos:${chkPair('atb')}</div>
+        <div class="cell xwide"><span class="label section">B</span>Antibióticos:${chkPair('atb', 'detail-input-wide')}</div>
         <div class="cell">Culturas:${chkPair('cult')}</div>
         <div class="cell">QT:${chkPair('qt')}</div>
         <div class="cell">Diálise:${chkPair('dial')}</div>
         <div class="cell">Sedação/Analgesia:${chkPair('sed')}</div>
-        <div class="cell">Corr. eletrólitos:${chkPair('elet')}</div>
       </div>
 
       <div class="row">
         <div class="cell"><span class="label section">A</span>Dieta:${chkPair('dieta')}</div>
         <div class="cell">O2:${chkPair('o2')}</div>
         <div class="cell">DVA:${chkPair('dva')}</div>
+        <div class="cell">Corr. eletrólitos:${chkPair('elet')}</div>
         <div class="cell wide">
           Transfusão:
           <label class="chk"><input type="checkbox" data-field="transf_ch"> CH</label>
